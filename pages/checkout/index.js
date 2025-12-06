@@ -26,6 +26,7 @@ const Checkout = () => {
   const router = useRouter();
   const couponCode = useRef("");
   const { session, status } = useSelector((state) => state.localSession);
+
   const [visibleTab, setVisibleTab] = useState(1);
   const [changeTab, setChangeTab] = useState(false);
   const [sameShippingAddressValue, setSameShippingAddressValue] =
@@ -43,6 +44,7 @@ const Checkout = () => {
   });
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [showLoginModal, setShowLoginModal] = useState(false);
+
   const deliveryLocation = useRef();
   const deliveryArea = useRef();
   const infoForm = useRef();
@@ -52,7 +54,6 @@ const Checkout = () => {
     if (status === "unauthenticated") {
       setShowLoginModal(true);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status]);
 
   async function fetchShippingCharge() {
@@ -120,7 +121,6 @@ const Checkout = () => {
   useEffect(() => {
     fetchShippingCharge();
     fetchAddress();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const sameShippingAddress = (e) => {
@@ -170,12 +170,6 @@ const Checkout = () => {
   const handleInfoSubmit = async (e) => {
     try {
       e.preventDefault();
-      if (!deliveryInfo.cost && !deliveryInfo.area) {
-        return toast.warning("Please Update The Delivery Information");
-      }
-      if (!preInfo.billingInfo?.fullName && !preInfo.shippingInfo?.fullName) {
-        return toast.warning("Please Update The Billing Information");
-      }
 
       dispatch(
         updateBillingData({
@@ -188,42 +182,6 @@ const Checkout = () => {
       setChangeTab(true);
     } catch (err) {
       console.log(err);
-    }
-  };
-
-  const setDeliveryLocation = () => {
-    const loc = deliveryLocation.current.value;
-    if (loc.length > 0) {
-      if (loc === "International Delivery") {
-        const deliveryData = {
-          type: "International Delivery",
-          cost: shippingChargeInfo.internationalCost,
-          area: null,
-        };
-        setDeliveryInfo(deliveryData);
-      } else {
-        const deliveryData = {
-          type: "Local Delivery",
-          cost: 0,
-          area: null,
-        };
-        setDeliveryInfo(deliveryData);
-      }
-    }
-  };
-
-  const setDeliveryArea = () => {
-    const area = deliveryArea.current.value;
-    const areaInfo = shippingChargeInfo.area.filter((item) =>
-      area.includes(item._id)
-    );
-    if (area.length > 0) {
-      const deliveryData = {
-        type: "Local Delivery",
-        cost: areaInfo[0]?.price,
-        area: areaInfo[0]?.name,
-      };
-      setDeliveryInfo(deliveryData);
     }
   };
 
@@ -291,12 +249,6 @@ const Checkout = () => {
       if (cartData.items.length === 0) {
         return toast.warning("Your Cart Is Empty");
       }
-      if (!deliveryInfo.cost && !deliveryInfo.area) {
-        return toast.warning("Please Update The Delivery Information");
-      }
-      if (!preInfo.billingInfo?.fullName && !preInfo.shippingInfo?.fullName) {
-        return toast.warning("Please Update The Billing Information");
-      }
       if (paymentMethod === "cod") {
         await processOrder("Cash On Delivery");
       } else if (paymentMethod === "wallet") {
@@ -323,20 +275,21 @@ const Checkout = () => {
                   setTab={setVisibleTab}
                   changeTab={changeTab}
                 />
-                {/* shipping, billing and delivery form */}
+                {/* shipping, billing form (NO DELIVERY TYPE NOW) */}
                 <form
                   className={classes.checkout_form}
                   onSubmit={handleInfoSubmit}
                   ref={infoForm}
                   style={{ display: visibleTab === 1 ? "block" : "none" }}
                 >
-                  <div className={classes.box}>{deliveryTypeJsx()}</div>
+                  {/* REMOVED DELIVERY TYPE SECTION */}
                   <div className={classes.box}>
                     {billingInfoJsx()}
                     {!sameShippingAddressValue && shippingInfoJsx()}
                     <button type="submit">{t("continue")}</button>
                   </div>
                 </form>
+
                 {/* Payment form */}
                 <div
                   className={classes.checkout_form}
@@ -351,6 +304,7 @@ const Checkout = () => {
                   </div>
                 </div>
               </div>
+
               <div className="col-lg-5">
                 <div className={classes.box}>{reviewJsx()}</div>
               </div>
@@ -358,6 +312,7 @@ const Checkout = () => {
           </div>
         </div>
       </div>
+
       <GlobalModal
         isOpen={newCustomer}
         handleCloseModal={() => {
@@ -367,6 +322,7 @@ const Checkout = () => {
       >
         <NewAddress hasMainAddress={hasMainAddress} />
       </GlobalModal>
+
       {showLoginModal && (
         <div className={classes.overlay}>
           <SignIn
@@ -403,6 +359,7 @@ const Checkout = () => {
         toast.error("Something Went Wrong!");
       }
     };
+
     return (
       <div>
         <h5 className="mt-3">{t("items_in_your_cart")} :</h5>
@@ -447,6 +404,7 @@ const Checkout = () => {
               ))}
             </tbody>
           </table>
+
           <table className={classes.priceTable}>
             <tbody>
               <tr>
@@ -457,6 +415,7 @@ const Checkout = () => {
                   {decimalBalance(getTotalPrice)}
                 </td>
               </tr>
+
               <tr>
                 <td colSpan="2"></td>
                 <td className="text-end">{t("tax")}:</td>
@@ -465,6 +424,7 @@ const Checkout = () => {
                   {decimalBalance(getTotalTax)}
                 </td>
               </tr>
+
               <tr>
                 <td colSpan="2"></td>
                 <td className="text-end">{t("vat")}:</td>
@@ -473,6 +433,7 @@ const Checkout = () => {
                   {decimalBalance(getTotalVat)}
                 </td>
               </tr>
+
               <tr>
                 <td colSpan="2"></td>
                 <td className="text-end">{t("discount")}:</td>
@@ -481,6 +442,7 @@ const Checkout = () => {
                   {decimalBalance(discountPrice)}
                 </td>
               </tr>
+
               <tr>
                 <td colSpan="2"></td>
                 <td className="text-end">{t("delivery_charge")}:</td>
@@ -489,6 +451,7 @@ const Checkout = () => {
                   {decimalBalance(deliveryInfo.cost || 0)}
                 </td>
               </tr>
+
               <tr>
                 <td colSpan="2"></td>
                 <td className="text-end fw-bold">{t("total")}:</td>
@@ -500,6 +463,7 @@ const Checkout = () => {
             </tbody>
           </table>
         </div>
+
         <div className="input-group mt-3">
           <input
             type="text"
@@ -586,6 +550,7 @@ const Checkout = () => {
               </label>
             ))}
           </div>
+
           <div className="py-2 mt-4 form-check">
             <input
               type="checkbox"
@@ -596,52 +561,6 @@ const Checkout = () => {
             <label className="form-check-label" htmlFor="Check1">
               {t("shipping_address_same_as_billing_address")}
             </label>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  function deliveryTypeJsx() {
-    return (
-      <div>
-        <div className="mb-3">
-          <div className={classes.input}>
-            <h5>{t("select_delivery_type")}*</h5>
-            <select
-              className="form-control mb-3"
-              defaultValue=""
-              onChange={setDeliveryLocation}
-              ref={deliveryLocation}
-            >
-              <option value="" disabled>
-                {t("select_delivery_type")}*
-              </option>
-              <option value="International Delivery">
-                International Delivery
-              </option>
-              <option value="Local Delivery">Local Delivery</option>
-            </select>
-            {deliveryInfo.type && deliveryInfo.type === "Local Delivery" && (
-              <div>
-                <label>{t("select_delivery_area")}*</label>
-                <select
-                  className="form-control mb-3"
-                  defaultValue=""
-                  onChange={setDeliveryArea}
-                  ref={deliveryArea}
-                >
-                  <option value="" disabled>
-                    {t("select_delivery_area")}*
-                  </option>
-                  {shippingChargeInfo.area.map((ct, idx) => (
-                    <option value={ct._id} key={idx}>
-                      {ct.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
           </div>
         </div>
       </div>
