@@ -18,11 +18,23 @@ const OrderSuccessPage = () => {
   const [orderData, setOrderData] = useState({});
   const router = useRouter();
   const { t } = useTranslation();
-  const url = `/api/home/order?id=${router.query.id}`;
-  const { data, error } = useSWR(router.query.id ? url : null, fetchData);
 
+  const url = `/api/home/order?id=${router.query.id}`;
+
+  // ⭐ REFETCH UNTIL ORDER IS READY (no more manual refresh!)
+  const { data, error } = useSWR(
+    router.query.id ? url : null,
+    fetchData,
+    {
+      refreshInterval: 1000,     // Re-check every 1 second
+      dedupingInterval: 500,     // Prevent unnecessary duplicates
+      shouldRetryOnError: true,
+    }
+  );
+
+  // When API returns the order, update state
   useEffect(() => {
-    if (data && data.order) {
+    if (data?.order) {
       setOrderData(data.order);
     }
   }, [data]);
@@ -41,13 +53,18 @@ const OrderSuccessPage = () => {
           <Spinner />
         </div>
       ) : !orderData.orderId ? (
-        <Error404 />
+        // If order is not ready yet, show loading instead of 404
+        <div style={{ height: "100vh" }}>
+          <Spinner />
+        </div>
       ) : (
         <div className={classes.top}>
           <div className={classes.mx}>
             <CheckoutNav tab={3} setTab={() => {}} changeTab={false} />
+
             <div className={`${classes.card} mt-5`}>
               <Invoice data={orderData} />
+
               <div className="py-2">
                 <div className="row">
                   <div className="col-md-6">
@@ -55,6 +72,7 @@ const OrderSuccessPage = () => {
                       {t("download_invoice")}
                     </button>
                   </div>
+
                   <div className="col-md-6">
                     <Link href="/gallery" passHref>
                       <button className="mt-3">{t("continue_shopping")}</button>
