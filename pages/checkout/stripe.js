@@ -18,22 +18,7 @@ export default function Stripe() {
   const settings = useSelector((state) => state.settings);
   const exchangeRate = Number(settings.settingsData.currency.exchangeRate);
 
-  // ⭐ NEW — Handle redirect back from Stripe
   useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const params = new URLSearchParams(window.location.search);
-    const clientSecretFromStripe = params.get("payment_intent_client_secret");
-
-    if (clientSecretFromStripe) {
-      setClientSecret(clientSecretFromStripe);
-      setLoading(false);
-    }
-  }, []);
-
-  // Original flow — only run if not returning from Stripe
-  useEffect(() => {
-    if (clientSecret) return; // ⛔ Do NOT create new intent if redirect case
     if (cartData.items.length > 0 && exchangeRate > 0) {
       async function getClientSecret() {
         try {
@@ -53,16 +38,20 @@ export default function Stripe() {
         }
         setLoading(false);
       }
-
       getClientSecret();
     } else {
-      // Prevent infinite loading when cart is empty or state reset
+      // no items / no exchange rate → stop showing infinite loader
       setLoading(false);
     }
-  }, [cartData, exchangeRate, settings, clientSecret]);
+  }, [cartData, exchangeRate, settings]);
 
-  const appearance = { theme: "stripe" };
-  const options = { clientSecret, appearance };
+  const appearance = {
+    theme: "stripe",
+  };
+  const options = {
+    clientSecret,
+    appearance,
+  };
 
   return (
     <>
@@ -73,7 +62,6 @@ export default function Stripe() {
               <Spinner />
             </div>
           )}
-
           {clientSecret && !loading && (
             <Elements options={options} stripe={stripePromise}>
               <CheckoutForm
