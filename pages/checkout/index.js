@@ -31,8 +31,6 @@ const Checkout = () => {
   const [sameShippingAddressValue, setSameShippingAddressValue] =
     useState(false);
   const [deliveryInfo, setDeliveryInfo] = useState({});
-  const [shippingChargeInfo, setShippingChargeInfo] = useState({});
-  const [newCustomer, setNewCustomer] = useState(false);
   const [_address, _setAddress] = useState([]);
   const [addressId, setAddressId] = useState("");
   const [shippingId, setShippingId] = useState("");
@@ -43,6 +41,7 @@ const Checkout = () => {
   });
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [newCustomer, setNewCustomer] = useState(false);
   const infoForm = useRef();
   const { t } = useTranslation();
 
@@ -52,23 +51,10 @@ const Checkout = () => {
     }
   }, [status]);
 
-  // Set free/default delivery automatically
+  // Default free delivery
   useEffect(() => {
     setDeliveryInfo({ type: "Default", cost: 0, area: null });
   }, []);
-
-  async function fetchShippingCharge() {
-    try {
-      const response = await fetchData(`/api/home/shipping`);
-      if (response.success) {
-        setShippingChargeInfo(response.shippingCharge);
-      } else {
-        toast.error("something went wrong");
-      }
-    } catch (err) {
-      console.log(err);
-    }
-  }
 
   async function fetchAddress() {
     try {
@@ -124,7 +110,6 @@ const Checkout = () => {
   }
 
   useEffect(() => {
-    fetchShippingCharge();
     fetchAddress();
   }, []);
 
@@ -178,8 +163,6 @@ const Checkout = () => {
   const handleInfoSubmit = async (e) => {
     try {
       e.preventDefault();
-
-      // Delivery validation removed
 
       if (!preInfo.billingInfo?.fullName && !preInfo.shippingInfo?.fullName) {
         return toast.warning("Please Update The Billing Information");
@@ -267,8 +250,6 @@ const Checkout = () => {
         return toast.warning("Your Cart Is Empty");
       }
 
-      // Removed delivery validation
-
       if (!preInfo.billingInfo?.fullName && !preInfo.shippingInfo?.fullName) {
         return toast.warning("Please Update The Billing Information");
       }
@@ -300,14 +281,12 @@ const Checkout = () => {
                   changeTab={changeTab}
                 />
 
-                {/* shipping + billing form */}
                 <form
                   className={classes.checkout_form}
                   onSubmit={handleInfoSubmit}
                   ref={infoForm}
                   style={{ display: visibleTab === 1 ? "block" : "none" }}
                 >
-                  {/* Delivery removed */}
                   <div className={classes.box}>
                     {billingInfoJsx()}
                     {!sameShippingAddressValue && shippingInfoJsx()}
@@ -315,7 +294,6 @@ const Checkout = () => {
                   </div>
                 </form>
 
-                {/* Payment form */}
                 <div
                   className={classes.checkout_form}
                   style={{ display: visibleTab === 2 ? "block" : "none" }}
@@ -342,6 +320,7 @@ const Checkout = () => {
         isOpen={newCustomer}
         handleCloseModal={() => {
           setNewCustomer(false);
+          setChangeTab(false);  // 🔥 FIX: collapse address section
           fetchAddress();
         }}
       >
@@ -427,10 +406,7 @@ const Checkout = () => {
                     </div>
                   </td>
 
-                  <td>
-                    {currencySymbol}
-                    {decimalBalance(item.price)}
-                  </td>
+                  <td>{currencySymbol}{decimalBalance(item.price)}</td>
                 </tr>
               ))}
             </tbody>
@@ -477,10 +453,7 @@ const Checkout = () => {
               <tr>
                 <td colSpan="2"></td>
                 <td className="text-end">{t("delivery_charge")}:</td>
-                <td className="text-end">
-                  {currencySymbol}
-                  {decimalBalance(0)}
-                </td>
+                <td className="text-end">{currencySymbol}{decimalBalance(0)}</td>
               </tr>
 
               <tr>
@@ -529,9 +502,7 @@ const Checkout = () => {
                   onChange={() => selectInfo(x._id, "shipping_address")}
                 />
 
-                <div
-                  className={`${classes.payment_card} ${classes.address_card}`}
-                >
+                <div className={`${classes.payment_card} ${classes.address_card}`}>
                   <span>{x.name}</span>
                   <span>{x.phone}</span>
                   <span>{`${x.house} ${x.state} ${x.zipCode} ${x.country}`}</span>
@@ -575,9 +546,7 @@ const Checkout = () => {
                   onChange={() => selectInfo(x._id, "billing_address")}
                 />
 
-                <div
-                  className={`${classes.payment_card} ${classes.address_card}`}
-                >
+                <div className={`${classes.payment_card} ${classes.address_card}`}>
                   <span>{x.name}</span>
                   <span>{x.phone}</span>
                   <span>{`${x.house} ${x.state} ${x.zipCode} ${x.country}`}</span>
