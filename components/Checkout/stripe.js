@@ -4,7 +4,7 @@ import {
   useStripe,
 } from "@stripe/react-stripe-js";
 import { useRouter } from "next/router";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { postData } from "~/lib/clientFunctions";
@@ -20,10 +20,12 @@ const CheckoutForm = (props) => {
   const [message, setMessage] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  // ⬇️ Create order in backend and redirect to success page
   const processOrder = async () => {
     try {
       const { coupon, items, billingInfo, shippingInfo, deliveryInfo } =
         cartData;
+
       const data = {
         coupon,
         products: items,
@@ -32,46 +34,63 @@ const CheckoutForm = (props) => {
         deliveryInfo,
         paymentData: {
           method: "Stripe",
-          id: null,
+          id: null, // you can later pass paymentIntent.id if you want
         },
       };
+
       const url = `/api/order/new`;
       const formData = new FormData();
       formData.append("checkoutData", JSON.stringify(data));
       const responseData = await postData(url, formData);
+
       if (responseData && responseData.success) {
         dispatch(resetCart());
         toast.success("Order successfully placed");
         setTimeout(() => {
           router.push(`/checkout/success/${responseData.createdOrder._id}`);
         }, 2300);
+        return responseData;
       } else {
         toast.error("Something Went Wrong (500)");
+        return null;
       }
     } catch (err) {
       toast.error(`Something Went Wrong ${err}`);
       console.log(err);
+      return null;
     }
   };
 
-  useEffect(() => {
-    if (!stripe) {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!stripe || !elements) {
       return;
     }
 
-    const clientSecret = new URLSearchParams(window.location.search).get(
-      "payment_intent_client_secret",
-    );
+    setIsLoading(true);
 
-    if (!clientSecret) {
-      return;
-    }
+    // ⭐ Handle success directly here – no manual refresh, no URL parsing needed
+    const { error, paymentIntent } = await stripe.confirmPayment({
+      elements,
+      confirmParams: {
+        // Used only if Stripe really needs a redirect (some payment methods)
+        return_url: `${process.env.NEXT_PUBLIC_URL}/checkout/stripe`,
+      },
+      redirect: "if_required",
+    });
 
-    stripe.retrievePaymentIntent(clientSecret).then(({ paymentIntent }) => {
+    if (error) {
+      if (error.type === "card_error" || error.type === "validation_error") {
+        setMessage(error.message);
+      } else {
+        setMessage("An unexpected error occured.");
+      }
+    } else if (paymentIntent) {
       switch (paymentIntent.status) {
         case "succeeded":
           setMessage("Payment succeeded!");
-          processOrder();
+          await processOrder(); // ⬅️ create order + redirect to success
           break;
         case "processing":
           setMessage("Your payment is processing.");
@@ -83,30 +102,6 @@ const CheckoutForm = (props) => {
           setMessage("Something went wrong.");
           break;
       }
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stripe]);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!stripe || !elements) {
-      return;
-    }
-
-    setIsLoading(true);
-
-    const { error } = await stripe.confirmPayment({
-      elements,
-      confirmParams: {
-        return_url: `${process.env.NEXT_PUBLIC_URL}/checkout/stripe`,
-      },
-    });
-
-    if (error.type === "card_error" || error.type === "validation_error") {
-      setMessage(error.message);
-    } else {
-      setMessage("An unexpected error occured.");
     }
 
     setIsLoading(false);
