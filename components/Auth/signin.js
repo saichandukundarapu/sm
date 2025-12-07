@@ -9,7 +9,6 @@ import { formField } from "~/lib/clientFunctions";
 import classes from "~/styles/signin.module.css";
 import dynamic from "next/dynamic";
 import {
-  Facebook,
   Instagram,
   Person,
   Pinterest,
@@ -26,6 +25,8 @@ export default function SignIn({ popup, hidePopup }) {
   const settings = useSelector((state) => state.settings);
   const { data: session } = useSession();
   const { t } = useTranslation();
+
+  // Error messages
   const errors = {
     Signin: "Try signing with a different account.",
     OAuthSignin: "Try signing with a different account.",
@@ -41,8 +42,9 @@ export default function SignIn({ popup, hidePopup }) {
     default: "Unable to sign in.",
   };
 
-  const { facebook, google } = settings.settingsData.login;
+  const { google } = settings.settingsData.login;
 
+  // Handle credential login
   async function signinProcess(e) {
     setState("loading");
     try {
@@ -53,18 +55,16 @@ export default function SignIn({ popup, hidePopup }) {
         password,
         username,
       });
+
       if (res.error) {
-        const errorMessage = res.error && (errors[res.error] ?? errors.default);
+        const errorMessage = errors[res.error] ?? errors.default;
         toast.error(errorMessage);
       }
       if (res.ok) {
         toast.success("Login successful");
-        if (popup) {
-          hidePopup();
-        }
+        if (popup) hidePopup();
       }
     } catch (err) {
-      console.log(err);
       toast.error(err.message);
     }
     setState("");
@@ -75,7 +75,6 @@ export default function SignIn({ popup, hidePopup }) {
       const url = session.user.a ? "/dashboard" : "/";
       router.push(url);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
 
   return (
@@ -83,19 +82,25 @@ export default function SignIn({ popup, hidePopup }) {
       <HeadData title="Sign in" />
       <div className={classes.container}>
         <div className={classes.card}>
+          {/* LEFT SIDE */}
           <div className={classes.info}>
             <div className={classes.icon}>
-              <Person width={60} height={60} />
+              {/* Avatar Added */}
+              <img
+                src="https://i.pravatar.cc/150?img=12"
+                alt="user avatar"
+                style={{
+                  width: 80,
+                  height: 80,
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                }}
+              />
             </div>
+
             <p>{settings.settingsData.description}</p>
+
             <div className={classes.social}>
-              <a
-                href={settings.settingsData.social.facebook}
-                className={classes.social_icon}
-                aria-label="Facebook"
-              >
-                <Facebook width={24} height={24} />
-              </a>
               <a
                 href={settings.settingsData.social.instagram}
                 className={classes.social_icon}
@@ -126,8 +131,11 @@ export default function SignIn({ popup, hidePopup }) {
               </a>
             </div>
           </div>
+
+          {/* RIGHT SIDE */}
           <div className={classes.form_container}>
             <h1>{t("signin")}</h1>
+
             <form className={classes.form} onSubmit={signinProcess}>
               <input
                 type="email"
@@ -136,6 +144,7 @@ export default function SignIn({ popup, hidePopup }) {
                 placeholder={t("email")}
                 required
               />
+
               <input
                 type="password"
                 className="form-control"
@@ -143,33 +152,27 @@ export default function SignIn({ popup, hidePopup }) {
                 placeholder={t("password")}
                 required
               />
+
               <div className={classes.reset_link}>
                 <Link href="/reset">{t("forget_your_password?")}</Link> |
                 <Link href="/signup"> {t("create_an_account!")}</Link>
               </div>
+
               <LoadingButton text={t("signin")} type="submit" state={state} />
             </form>
-            {(facebook || google) && <span className={classes.hr} />}
-            <div>
-              {facebook && (
-                <button
-                  variant="outline"
-                  onClick={async () => await signIn("facebook")}
-                  className={classes.facebook}
-                >
-                  {t("signin_with_facebook")}
-                </button>
-              )}
-              {google && (
-                <button
-                  variant="outline"
-                  onClick={async () => await signIn("google")}
-                  className={classes.google}
-                >
-                  {t("signin_with_google")}
-                </button>
-              )}
-            </div>
+
+            {google && <span className={classes.hr} />}
+
+            {/* ONLY Google Button - Facebook removed */}
+            {google && (
+              <button
+                variant="outline"
+                onClick={async () => await signIn("google")}
+                className={classes.google}
+              >
+                {t("signin_with_google")}
+              </button>
+            )}
           </div>
         </div>
       </div>
