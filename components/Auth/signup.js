@@ -8,7 +8,6 @@ import HeadData from "~/components/Head";
 import { postData } from "~/lib/clientFunctions";
 import classes from "~/styles/signin.module.css";
 import {
-  Facebook,
   Instagram,
   Person,
   Pinterest,
@@ -25,7 +24,7 @@ export default function SignUp() {
   const passwordConfirm = useRef();
   const { t } = useTranslation();
   const settings = useSelector((state) => state.settings);
-  const { facebook, google } = settings.settingsData.login;
+  const { google } = settings.settingsData.login;
 
   const handleForm = async (e) => {
     e.preventDefault();
@@ -35,7 +34,9 @@ export default function SignUp() {
         data.append("name", name.current.value);
         data.append("email", email.current.value);
         data.append("password", password.current.value);
+
         const response = await postData(`/api/auth/signup`, data);
+
         response.success
           ? (toast.success("New account added successfully"),
             document.querySelector("#signup_form").reset())
@@ -54,21 +55,28 @@ export default function SignUp() {
   return (
     <>
       <HeadData title="Register" />
+
       <div className={classes.container}>
         <div className={classes.card}>
+          {/* LEFT SIDE */}
           <div className={classes.info}>
             <div className={classes.icon}>
-              <Person width={60} height={60} />
+              {/* Avatar image added instead of <Person /> */}
+              <img
+                src="https://i.pravatar.cc/150?img=14"
+                alt="avatar"
+                style={{
+                  width: 80,
+                  height: 80,
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                }}
+              />
             </div>
+
             <p>{settings.settingsData.description}</p>
+
             <div className={classes.social}>
-              <a
-                href={settings.settingsData.social.facebook}
-                className={classes.social_icon}
-                aria-label="Facebook"
-              >
-                <Facebook width={24} height={24} />
-              </a>
               <a
                 href={settings.settingsData.social.instagram}
                 className={classes.social_icon}
@@ -99,8 +107,11 @@ export default function SignUp() {
               </a>
             </div>
           </div>
+
+          {/* RIGHT SIDE */}
           <div className={classes.form_container}>
             <h1>{t("signup")}</h1>
+
             <form
               onSubmit={handleForm}
               id="signup_form"
@@ -113,6 +124,7 @@ export default function SignUp() {
                 placeholder={`${t("name")}*`}
                 className="form-control"
               />
+
               <input
                 type="email"
                 ref={email}
@@ -120,6 +132,7 @@ export default function SignUp() {
                 placeholder={`${t("email")}*`}
                 className="form-control"
               />
+
               <input
                 type="password"
                 ref={password}
@@ -127,6 +140,7 @@ export default function SignUp() {
                 placeholder={`${t("new_password")}*`}
                 className="form-control"
               />
+
               <input
                 type="password"
                 ref={passwordConfirm}
@@ -134,34 +148,28 @@ export default function SignUp() {
                 placeholder={`${t("confirm_password")}*`}
                 className="form-control"
               />
+
               <div className={classes.reset_link}>
                 <Link href="/signin">
                   {t("already_have_an_account?_sign_in")}
                 </Link>
               </div>
+
               <button type="submit">{t("signup")}</button>
             </form>
-            {(facebook || google) && <span className={classes.hr} />}
-            <div>
-              {facebook && (
-                <button
-                  variant="outline"
-                  onClick={async () => await signIn("facebook")}
-                  className={classes.facebook}
-                >
-                  {t("signin_with_facebook")}
-                </button>
-              )}
-              {google && (
-                <button
-                  variant="outline"
-                  onClick={async () => await signIn("google")}
-                  className={classes.google}
-                >
-                  {t("signin_with_google")}
-                </button>
-              )}
-            </div>
+
+            {google && <span className={classes.hr} />}
+
+            {/* ONLY GOOGLE BUTTON (Facebook removed) */}
+            {google && (
+              <button
+                variant="outline"
+                onClick={async () => await signIn("google")}
+                className={classes.google}
+              >
+                {t("signin_with_google")}
+              </button>
+            )}
           </div>
         </div>
       </div>
