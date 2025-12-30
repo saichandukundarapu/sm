@@ -1,5 +1,5 @@
-import orderModel from "../../models/order";
-import dbConnect from "../../utils/dbConnect";
+import orderModel from "../../../models/order";
+import dbConnect from "../../../utils/dbConnect";
 
 export default async function apiHandler(req, res) {
   const { method } = req;
@@ -13,7 +13,7 @@ export default async function apiHandler(req, res) {
 
         let order = null;
 
-        // ✅ Stripe tracking
+        // Stripe order lookup
         if (session_id) {
           order = await orderModel
             .findOne({ stripeSessionId: session_id })
@@ -21,7 +21,7 @@ export default async function apiHandler(req, res) {
             .lean();
         }
 
-        // ✅ Normal order tracking
+        // Normal orderId lookup
         if (!order && id) {
           order = await orderModel
             .findOne({ orderId: id })
@@ -38,15 +38,13 @@ export default async function apiHandler(req, res) {
           "s-maxage=60, stale-while-revalidate"
         );
 
-        res.status(200).json({ success: true, order });
+        return res.status(200).json({ success: true, order });
       } catch (err) {
         console.error(err);
-        res.status(500).json({ success: false });
+        return res.status(500).json({ success: false });
       }
-      break;
 
     default:
-      res.status(400).json({ success: false });
-      break;
+      return res.status(400).json({ success: false });
   }
 }
