@@ -147,11 +147,14 @@ export const order = {
   deliveryInfo: Object,
   paymentMethod: String,
   paymentId: String,
+
+  // 🔥 REQUIRED FOR STRIPE WEBHOOK
+  stripeSessionId: String,
+
   totalPrice: Number,
   payAmount: Number,
   coupon: Object,
   orderStatus: String,
-  paymentStatus: String,
   vat: { type: Number, default: 0 },
   tax: { type: Number, default: 0 },
   new: { type: Boolean, default: true },
@@ -289,21 +292,6 @@ export const webpage = {
         image: Array,
       },
     },
-  },
-  aboutPage: {
-    content: String,
-  },
-  privacyPage: {
-    content: String,
-  },
-  termsPage: {
-    content: String,
-  },
-  returnPolicyPage: {
-    content: String,
-  },
-  faqPage: {
-    content: String,
   },
 };
 
