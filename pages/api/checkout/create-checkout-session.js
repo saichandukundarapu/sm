@@ -1,6 +1,16 @@
 import Stripe from "stripe";
+import orderModel from "../../../models/order";
+import dbConnect from "../../../utils/dbConnect";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+function generateOrderId() {
+  return (
+    "R" +
+    Math.random().toString(36).substring(2, 6).toUpperCase() +
+    Date.now().toString().slice(-6)
+  );
+}
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -8,6 +18,8 @@ export default async function handler(req, res) {
   }
 
   try {
+    await dbConnect();
+
     const { cartData, billingInfo } = req.body;
 
     // 🛑 Validation
@@ -43,7 +55,34 @@ export default async function handler(req, res) {
       });
     }
 
-    // 🧾 2️⃣ Line items
+    // 🧾 2️⃣ Create ORDER BEFORE Stripe
+    const order = await orderModel.create({
+      orderId: generateOrderId(),
+      products: cartData.items,
+      billingInfo,
+      shippingInfo: billingInfo,
+      deliveryInfo: cartData.deliveryInfo || {
+        type: "Default",
+        cost: 0,
+        area: null,
+      },
+      paymentMethod: "Stripe",
+      paymentStatus: "Unpaid",
+      status: "Draft",
+      totalPrice: cartData.items.reduce(
+        (sum, item) => sum + item.qty * item.price,
+        0
+      ),
+      payAmount: cartData.items.reduce(
+        (sum, item) => sum + item.qty * item.price,
+        0
+      ),
+      coupon: cartData.coupon || { code: "", discount: 0 },
+      vat: 0,
+      tax: 0,
+    });
+
+    // 🧾 3️⃣ Line items
     const line_items = cartData.items.map((item) => ({
       price_data: {
         currency: "aud",
@@ -55,7 +94,7 @@ export default async function handler(req, res) {
       quantity: item.qty,
     }));
 
-    // 💳 3️⃣ Create Checkout Session
+    // 💳 4️⃣ Create Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
 
@@ -75,16 +114,19 @@ export default async function handler(req, res) {
 
       line_items,
 
-      // ✅ FIXED: Stripe-required placeholder
       success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/checkout/cancel`,
 
-      // ✅ Recommended metadata
       metadata: {
+        orderId: order.orderId,
+        orderDbId: order._id.toString(),
         customer_email: billingInfo.email,
-        items_count: cartData.items.length.toString(),
       },
     });
+
+    // 🔥 5️⃣ SAVE Stripe session ID (CRITICAL FIX)
+    order.stripeSessionId = session.id;
+    await order.save();
 
     return res.status(200).json({ url: session.url });
   } catch (error) {
