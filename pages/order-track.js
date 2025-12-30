@@ -18,13 +18,13 @@ const OrderTrack = () => {
   const trackOrder = async () => {
     try {
       const id = orderId.current.value.trim();
-      if (id.length > 0) {
-        const response = await fetchData(`/api/home/order-track?id=${id}`);
-        if (response.order) {
-          setOrderData(response.order);
-        } else {
-          toast.error("Invalid Reference");
-        }
+      if (!id) return;
+
+      const response = await fetchData(`/api/home/order-track?id=${id}`);
+      if (response?.order) {
+        setOrderData(response.order);
+      } else {
+        toast.error("Invalid Reference");
       }
     } catch (err) {
       toast.error(err.message);
@@ -46,16 +46,20 @@ const OrderTrack = () => {
           />
           <button onClick={trackOrder}>{t("track_your_order")}</button>
         </div>
-        {orderData.orderId && detailsViewer()}
+        {orderData?.orderId && detailsViewer()}
       </div>
     </>
   );
 
   function detailsViewer() {
+    const deliveryInfo = orderData.deliveryInfo || {};
+
     return (
       <div className="custom_container">
         <div className="card mb-5 border-0 shadow">
-          <div className="card-header bg-white py-3 fw-bold">Order Details</div>
+          <div className="card-header bg-white py-3 fw-bold">
+            Order Details
+          </div>
           <div className="card-body">
             <div className={classes.body}>
               <div className={`${classes.order_details} row`}>
@@ -65,7 +69,8 @@ const OrderTrack = () => {
                     Order Id: <span>{orderData.orderId}</span>
                   </p>
                   <p>
-                    Order Date : <span>{dateFormat(orderData.orderDate)}</span>
+                    Order Date :{" "}
+                    <span>{dateFormat(orderData.orderDate)}</span>
                   </p>
                   <p>
                     Payment Status :{" "}
@@ -77,42 +82,50 @@ const OrderTrack = () => {
                   </p>
                   <p>
                     Order Status:{" "}
-                    <span className="badge bg-primary">{orderData.status}</span>
+                    <span className="badge bg-primary">
+                      {orderData.status}
+                    </span>
                   </p>
                   <p>
-                    Payment Method: <span>{orderData.paymentMethod}</span>
+                    Payment Method:{" "}
+                    <span>{orderData.paymentMethod}</span>
                   </p>
                 </div>
+
                 <div className="col-md-6">
                   <h6>Delivery Information :</h6>
                   <p>
-                    Delivery Type: <span>{orderData.deliveryInfo.type}</span>
+                    Delivery Type:{" "}
+                    <span>{deliveryInfo.type || "N/A"}</span>
                   </p>
-                  {orderData.deliveryInfo.area && (
+                  {deliveryInfo.area && (
                     <p>
-                      Delivery Area: <span>{orderData.deliveryInfo.area}</span>
+                      Delivery Area: <span>{deliveryInfo.area}</span>
                     </p>
                   )}
                   <p>
                     Delivery Cost :{" "}
-                    <span>{currencySymbol + orderData.deliveryInfo.cost}</span>
+                    <span>
+                      {currencySymbol + (deliveryInfo.cost || 0)}
+                    </span>
                   </p>
                 </div>
               </div>
+
               <div className="table-responsive">
                 <table className="table table-bordered">
                   <thead>
                     <tr>
-                      <th scope="col">#</th>
-                      <th scope="col">Products</th>
-                      <th scope="col">Quantity</th>
-                      <th scope="col">Price</th>
+                      <th>#</th>
+                      <th>Products</th>
+                      <th>Quantity</th>
+                      <th>Price</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {orderData.products.map((product, idx) => (
-                      <tr key={idx + product._id}>
-                        <th scope="row">{idx + 1}</th>
+                    {(orderData.products || []).map((product, idx) => (
+                      <tr key={idx}>
+                        <th>{idx + 1}</th>
                         <td>{product.name}</td>
                         <td>{product.qty}</td>
                         <td>{currencySymbol + product.price}</td>
@@ -121,6 +134,7 @@ const OrderTrack = () => {
                   </tbody>
                 </table>
               </div>
+
               <div className={classes.payment_info}>
                 <div>
                   <span>Sub Total</span>
@@ -140,7 +154,9 @@ const OrderTrack = () => {
                 </div>
                 <div>
                   <span>Delivery Charge</span>
-                  <span>{currencySymbol + orderData.deliveryInfo.cost}</span>
+                  <span>
+                    {currencySymbol + (deliveryInfo.cost || 0)}
+                  </span>
                 </div>
                 <div>
                   <span>{t("vat")}</span>
