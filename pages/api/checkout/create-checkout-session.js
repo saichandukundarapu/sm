@@ -75,8 +75,15 @@ export default async function handler(req, res) {
 
       line_items,
 
-      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/checkout/success/<%= session.id %>`,
+      // ✅ FIXED: Stripe-required placeholder
+      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/checkout/cancel`,
+
+      // ✅ Recommended metadata
+      metadata: {
+        customer_email: billingInfo.email,
+        items_count: cartData.items.length.toString(),
+      },
     });
 
     return res.status(200).json({ url: session.url });
