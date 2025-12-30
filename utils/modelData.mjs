@@ -138,53 +138,23 @@ export const newsletter = {
 
 export const order = {
   orderId: String,
-
   orderDate: { type: Date, default: Date.now },
-
-  // 🔹 Stripe
-  stripeSessionId: {
-    type: String,
-    index: true, // fast lookup by session_id
-  },
-
   products: Array,
-
   status: String,
-
-  // 🔹 Payment
-  paymentStatus: {
-    type: String,
-    default: "Unpaid",
-  },
-
-  paymentMethod: String,
-  paymentId: String,
-
-  paidAt: Date, // 🔥 added
-
-  // 🔹 Pricing
-  totalPrice: Number,
-  payAmount: Number,
-
-  vat: { type: Number, default: 0 },
-  tax: { type: Number, default: 0 },
-
-  coupon: Object,
-
-  // 🔹 Receipt
-  receiptUrl: {
-    type: String, // 🔥 added (PDF path)
-  },
-
-  // 🔹 Shipping / Billing
+  paymentStatus: String,
   billingInfo: Object,
   shippingInfo: Object,
   deliveryInfo: Object,
-
+  paymentMethod: String,
+  paymentId: String,
+  totalPrice: Number,
+  payAmount: Number,
+  coupon: Object,
   orderStatus: String,
-
+  paymentStatus: String,
+  vat: { type: Number, default: 0 },
+  tax: { type: Number, default: 0 },
   new: { type: Boolean, default: true },
-
   user: [{ type: mongoose.Schema.Types.ObjectId, ref: "user" }],
 };
 
