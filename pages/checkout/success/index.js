@@ -19,31 +19,26 @@ export default function OrderSuccessPage() {
   const router = useRouter();
   const { t } = useTranslation();
 
-  // Wait until router is ready
-  if (!router.isReady) return null;
-
   const { id, session_id } = router.query;
 
-  // Support both COD (/checkout/success/[id]) and Stripe (/checkout/success?session_id=)
-  const url = id
-    ? `/api/home/order?id=${id}`
-    : session_id
-    ? `/api/home/order?session_id=${session_id}`
-    : null;
+  // ✅ Hooks are ALWAYS called
+  const url =
+    id
+      ? `/api/home/order?id=${id}`
+      : session_id
+      ? `/api/home/order?session_id=${session_id}`
+      : null;
 
   const { data, error } = useSWR(url, fetchData);
 
-  // Load order data
   useEffect(() => {
     if (data?.order) {
       setOrderData(data.order);
     }
   }, [data]);
 
-  // Error state
   if (error) return <Error500 />;
 
-  // Loading state
   if (!data) {
     return (
       <div style={{ height: "100vh" }}>
@@ -52,7 +47,6 @@ export default function OrderSuccessPage() {
     );
   }
 
-  // Order not found
   if (!orderData?._id) return <Error404 />;
 
   async function printDoc() {
@@ -91,7 +85,6 @@ export default function OrderSuccessPage() {
           </div>
         </div>
 
-        {/* Hidden printable invoice */}
         <div id="inv_content" style={{ display: "none" }}>
           <InvoicePrint data={orderData} />
         </div>
