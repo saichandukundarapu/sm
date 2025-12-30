@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import Spinner from "~/components/Ui/Spinner";
@@ -6,12 +6,15 @@ import { postData } from "~/lib/clientFunctions";
 
 export default function Stripe() {
   const cartData = useSelector((state) => state.cart);
-  const session = useSelector((state) => state.localSession.session);
+  const hasRedirected = useRef(false); // ✅ prevent duplicate calls
 
   useEffect(() => {
+    if (hasRedirected.current) return;
+    hasRedirected.current = true;
+
     async function redirectToCheckout() {
       try {
-        if (!cartData.items.length) {
+        if (!cartData.items?.length) {
           toast.error("Cart is empty");
           return;
         }
@@ -25,7 +28,7 @@ export default function Stripe() {
           "/api/checkout/create-checkout-session",
           {
             cartData,
-            billingInfo: cartData.billingInfo, // ✅ IMPORTANT
+            billingInfo: cartData.billingInfo, // ✅ required
           }
         );
 
@@ -41,7 +44,7 @@ export default function Stripe() {
     }
 
     redirectToCheckout();
-  }, [cartData]);
+  }, []); // ✅ run once only
 
   return (
     <div className="layout_top">
