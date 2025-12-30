@@ -10,7 +10,6 @@ export default async function handler(req, res) {
   try {
     const { cartData, billingInfo } = req.body;
 
-    // 🛑 Validation
     if (!cartData || !cartData.items?.length) {
       return res.status(400).json({ error: "Cart is empty" });
     }
@@ -19,17 +18,20 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Billing info missing" });
     }
 
-    // 🔁 1️⃣ Find or create Stripe customer
+    // ⚠️ cartData.orderId MUST exist
+    if (!cartData.orderId) {
+      return res.status(400).json({ error: "Order ID missing" });
+    }
+
+    // 1️⃣ Find or create customer
     let customer;
     const existingCustomers = await stripe.customers.list({
       email: billingInfo.email,
       limit: 1,
     });
 
-    if (existingCustomers.data.length > 0) {
-      customer = existingCustomers.data[0];
-    } else {
-      customer = await stripe.customers.create({
+    customer = existingCustomers.data[0] ??
+      await stripe.customers.create({
         email: billingInfo.email,
         name: billingInfo.fullName,
         phone: billingInfo.phone,
@@ -41,9 +43,8 @@ export default async function handler(req, res) {
           country: "AU",
         },
       });
-    }
 
-    // 🧾 2️⃣ Line items
+    // 2️⃣ Line items
     const line_items = cartData.items.map((item) => ({
       price_data: {
         currency: "aud",
@@ -55,17 +56,11 @@ export default async function handler(req, res) {
       quantity: item.qty,
     }));
 
-    // 💳 3️⃣ Create Checkout Session
+    // 3️⃣ Create Checkout Session (FIXED)
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
 
       customer: customer.id,
-
-      customer_update: {
-        name: "auto",
-        address: "auto",
-        shipping: "auto",
-      },
 
       billing_address_collection: "required",
 
@@ -75,9 +70,11 @@ export default async function handler(req, res) {
 
       line_items,
 
-      // ✅ UPDATED SUCCESS URL (ONLY CHANGE)
-      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/stripe-success?session_id={CHECKOUT_SESSION_ID}`,
+      metadata: {
+        orderId: cartData.orderId, // 🔴 REQUIRED
+      },
 
+      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/checkout/success/{CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/checkout/cancel`,
     });
 
