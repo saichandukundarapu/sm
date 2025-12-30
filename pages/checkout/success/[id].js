@@ -19,14 +19,13 @@ const OrderSuccessPage = () => {
   const router = useRouter();
   const { t } = useTranslation();
 
-  // ✅ SUPPORT BOTH COD & STRIPE
-  const orderId = router.query.id;
-  const sessionId = router.query.session_id;
+  // ✅ SUPPORT BOTH COD & STRIPE (FIXED)
+  const { id } = router.query;
 
-  const url = orderId
-    ? `/api/home/order?id=${orderId}`
-    : sessionId
-    ? `/api/home/order?session_id=${sessionId}`
+  const url = id
+    ? id.startsWith("cs_")
+      ? `/api/home/order?session_id=${id}` // Stripe
+      : `/api/home/order?id=${id}`         // COD
     : null;
 
   const { data, error } = useSWR(url, fetchData);
