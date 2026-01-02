@@ -39,7 +39,7 @@ function HomePage({ data, error }) {
 
   return (
     <>
-      {/* 🧩 AMAZON-STYLE OFFER TILES */}
+      {/* 🧩 AMAZON-STYLE OFFER TILES (NO CROPPING) */}
       <style jsx>{`
         .offer-section {
           max-width: 1200px;
@@ -56,10 +56,10 @@ function HomePage({ data, error }) {
         .offer-card {
           background: #fff;
           border-radius: 10px;
-          overflow: hidden;
           cursor: pointer;
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
           transition: transform 0.25s ease, box-shadow 0.25s ease;
+          padding: 8px;
         }
 
         .offer-card:hover {
@@ -67,14 +67,17 @@ function HomePage({ data, error }) {
           box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
         }
 
+        /* ✅ FULL IMAGE VISIBILITY */
         .offer-card img {
           width: 100%;
-          height: 220px;
-          object-fit: cover;
+          height: auto;
+          max-height: 260px;
+          object-fit: contain;
           display: block;
+          background: #fff;
         }
 
-        /* Mobile: horizontal slider */
+        /* 📱 Mobile: horizontal slider */
         @media (max-width: 768px) {
           .offer-grid {
             display: flex;
@@ -89,7 +92,7 @@ function HomePage({ data, error }) {
           }
 
           .offer-card img {
-            height: 180px;
+            max-height: 200px;
           }
         }
       `}</style>
@@ -100,10 +103,10 @@ function HomePage({ data, error }) {
         <>
           <HeadData />
 
-          {/* 🔥 TOP SMALL PROMOTIONAL SECTION */}
+          {/* 🔥 TOP PROMOTIONAL OFFERS */}
           <div className="offer-section">
             <div className="offer-grid">
-              {/* CARD 1 */}
+              {/* OFFER 1 */}
               <div
                 className="offer-card"
                 onClick={() =>
@@ -113,11 +116,11 @@ function HomePage({ data, error }) {
               >
                 <img
                   src="https://nextlife-store-images.s3.eu-north-1.amazonaws.com/8858987ojxdjvs8898585atbkfrt7cc1e2bd-b40f-4f58-a9f9-b7945cb3d346.png"
-                  alt="Aspire Stride Walker Offer"
+                  alt="Aspire Stride Adjustable Seat Walker Rollator"
                 />
               </div>
 
-              {/* CARD 2 */}
+              {/* OFFER 2 */}
               <div
                 className="offer-card"
                 onClick={() =>
@@ -127,7 +130,7 @@ function HomePage({ data, error }) {
               >
                 <img
                   src="https://nextlife-store-images.s3.eu-north-1.amazonaws.com/3000107kobzocy1330231bnbckyoimage_2026-01-02_134517418.png"
-                  alt="ResMed AirSense 11 CPAP Offer"
+                  alt="ResMed AirSense 11 AutoSet CPAP Machine"
                 />
               </div>
             </div>
