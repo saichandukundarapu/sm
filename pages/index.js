@@ -26,62 +26,60 @@ function HomePage({ data, error }) {
   const [isOpen, setIsOpen] = useState(false);
   const { t } = useTranslation();
 
-  const PRODUCT_URL =
-    "https://brisbanesurgicalsupplies.com/product/aspire-stride-adjustable-seat-walker-rollator-55su33lm";
-
-  const handleCloseModal = () => {
-    router.push("/", undefined, { scroll: false });
-    setIsOpen(false);
-  };
-
   useEffect(() => {
     if (router.query.slug) {
       setIsOpen(true);
     }
   }, [router.query.slug]);
 
-  const goToOffer = () => {
-    window.location.href = PRODUCT_URL;
+  const handleCloseModal = () => {
+    router.push("/", undefined, { scroll: false });
+    setIsOpen(false);
   };
 
   return (
     <>
-      {/* 🎄 CHRISTMAS IMAGE TILE BANNER STYLES */}
+      {/* 🔥 TOP OFFER SLIDER STYLES */}
       <style jsx>{`
-        .offer-tile-wrapper {
+        .offer-slider-wrapper {
           width: 100%;
-          display: flex;
-          justify-content: center;
           margin: 12px 0;
-          cursor: pointer;
+          overflow: hidden;
         }
 
-        .offer-tile {
+        .offer-slider {
+          display: flex;
+          gap: 16px;
+          overflow-x: auto;
+          scroll-snap-type: x mandatory;
+          -webkit-overflow-scrolling: touch;
+        }
+
+        .offer-slide {
+          flex: 0 0 100%;
           max-width: 1200px;
-          width: 100%;
+          margin: auto;
+          scroll-snap-align: center;
           border-radius: 12px;
           overflow: hidden;
+          cursor: pointer;
           box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
           transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
-        .offer-tile:hover {
+        .offer-slide:hover {
           transform: translateY(-2px);
           box-shadow: 0 10px 26px rgba(0, 0, 0, 0.25);
         }
 
-        .offer-tile img {
+        .offer-slide img {
           width: 100%;
           height: auto;
           display: block;
         }
 
         @media (max-width: 768px) {
-          .offer-tile-wrapper {
-            margin: 8px 0;
-          }
-
-          .offer-tile {
+          .offer-slide {
             border-radius: 8px;
           }
         }
@@ -93,17 +91,40 @@ function HomePage({ data, error }) {
         <>
           <HeadData />
 
-          {/* 🎄 CHRISTMAS IMAGE TILE BANNER */}
-          <div className="offer-tile-wrapper" onClick={goToOffer}>
-            <div className="offer-tile">
-              <img
-                src="https://nextlife-store-images.s3.eu-north-1.amazonaws.com/8858987ojxdjvs8898585atbkfrt7cc1e2bd-b40f-4f58-a9f9-b7945cb3d346.png"
-                alt="Christmas Special Offer - Aspire Stride Adjustable Seat Walker Rollator"
-              />
+          {/* 🔥 TOP PROMOTIONAL SLIDER */}
+          <div className="offer-slider-wrapper">
+            <div className="offer-slider">
+              {/* SLIDE 1 */}
+              <div
+                className="offer-slide"
+                onClick={() =>
+                  (window.location.href =
+                    "https://brisbanesurgicalsupplies.com/product/aspire-stride-adjustable-seat-walker-rollator-55su33lm")
+                }
+              >
+                <img
+                  src="https://nextlife-store-images.s3.eu-north-1.amazonaws.com/8858987ojxdjvs8898585atbkfrt7cc1e2bd-b40f-4f58-a9f9-b7945cb3d346.png"
+                  alt="Aspire Stride Adjustable Seat Walker Rollator Offer"
+                />
+              </div>
+
+              {/* SLIDE 2 */}
+              <div
+                className="offer-slide"
+                onClick={() =>
+                  (window.location.href =
+                    "https://brisbanesurgicalsupplies.com/product/resmed-airsense-11-autoset-cpap-machine-55ll05kv")
+                }
+              >
+                <img
+                  src="https://nextlife-store-images.s3.eu-north-1.amazonaws.com/3000107kobzocy1330231bnbckyoimage_2026-01-02_134517418.png"
+                  alt="ResMed AirSense 11 AutoSet CPAP Machine Offer"
+                />
+              </div>
             </div>
           </div>
 
-          {/* 🔝 HEADER / NAVIGATION */}
+          {/* 🔝 HEADER */}
           <Header
             carousel={data.additional && data.additional.homePage.carousel}
           />
@@ -131,7 +152,7 @@ function HomePage({ data, error }) {
         </>
       )}
 
-      {/* 🔒 EXISTING MODAL (UNCHANGED) */}
+      {/* 🔒 PRODUCT QUICK VIEW MODAL */}
       <GlobalModal
         small={false}
         isOpen={isOpen}
@@ -147,7 +168,7 @@ function HomePage({ data, error }) {
 
 export const getServerSideProps = wrapper.getServerSideProps(
   (store) =>
-    async ({ req, res, locale, ...etc }) => {
+    async ({ res }) => {
       if (res) {
         res.setHeader(
           "Cache-Control",
@@ -156,9 +177,11 @@ export const getServerSideProps = wrapper.getServerSideProps(
       }
       const _data = await homePageData();
       const data = JSON.parse(JSON.stringify(_data));
+
       if (data.success) {
         setSettingsData(store, data);
       }
+
       return {
         props: {
           data,
