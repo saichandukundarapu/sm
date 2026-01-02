@@ -5,7 +5,9 @@ import { useTranslation } from "react-i18next";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import classes from "~/components/Checkout/checkout.module.css";
+import NewAddress from "~/components/Profile/addressForm";
 import HeadData from "~/components/Head";
+import GlobalModal from "~/components/Ui/Modal/modal";
 import { checkPercentage, fetchData, postData } from "~/lib/clientFunctions";
 import { applyCoupon, resetCart, updateBillingData } from "~/redux/cart.slice";
 import SignIn from "~/components/Auth/signin";
@@ -14,6 +16,7 @@ const CheckoutNav = dynamic(() => import("~/components/Checkout/checkoutNav"));
 const PaymentGatewayList = dynamic(() =>
   import("~/components/Checkout/paymentGatewayList")
 );
+const ImageLoader = dynamic(() => import("~/components/Image"));
 
 const Checkout = () => {
   const cartData = useSelector((state) => state.cart);
@@ -21,180 +24,555 @@ const Checkout = () => {
   const currencySymbol = settings.settingsData.currency.symbol;
   const dispatch = useDispatch();
   const router = useRouter();
+  const couponCode = useRef("");
   const { session, status } = useSelector((state) => state.localSession);
-
   const [visibleTab, setVisibleTab] = useState(1);
   const [changeTab, setChangeTab] = useState(false);
-
+  const [sameShippingAddressValue, setSameShippingAddressValue] =
+    useState(false);
+  const [deliveryInfo, setDeliveryInfo] = useState({});
+  const [_address, _setAddress] = useState([]);
+  const [addressId, setAddressId] = useState("");
+  const [shippingId, setShippingId] = useState("");
+  const [hasMainAddress, setHasMainAddress] = useState(false);
   const [preInfo, setPreInfo] = useState({
     billingInfo: {},
     shippingInfo: {},
   });
-
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [newCustomer, setNewCustomer] = useState(false);
+  const infoForm = useRef();
   const { t } = useTranslation();
 
   useEffect(() => {
-    if (status === "unauthenticated") setShowLoginModal(true);
+    if (status === "unauthenticated") {
+      setShowLoginModal(true);
+    }
   }, [status]);
 
-  const handleChange = (type, field, value) => {
-    setPreInfo((prev) => ({
-      ...prev,
-      [type]: {
-        ...prev[type],
-        [field]: value,
-      },
-    }));
+  // Default free delivery
+  useEffect(() => {
+    setDeliveryInfo({ type: "Default", cost: 0, area: null });
+  }, []);
+
+  async function fetchAddress() {
+    try {
+      const response = await fetchData(`/api/profile/address`);
+      if (response.success && response.user?.address) {
+        _setAddress(response.user.address);
+        const resp = response.user.address.find(
+          (e) => e.addressType === "main address"
+        );
+
+        if (resp) {
+          const {
+            name,
+            email,
+            phone,
+            house,
+            city,
+            state,
+            zipCode,
+            country,
+            addressTitle,
+          } = resp;
+
+          const data = {
+            fullName: name,
+            phone,
+            email,
+            house,
+            city,
+            state,
+            zipCode,
+            country,
+            addressTitle,
+          };
+
+          const preData = {
+            billingInfo: data,
+            shippingInfo: data,
+          };
+
+          setPreInfo(preData);
+          setAddressId(resp._id);
+          setShippingId(resp._id);
+          setHasMainAddress(true);
+        }
+      } else {
+        const { billingInfo, shippingInfo } = cartData;
+        setPreInfo({ billingInfo, shippingInfo });
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  useEffect(() => {
+    fetchAddress();
+  }, []);
+
+  const sameShippingAddress = (e) => {
+    const isChecked = e.target.checked;
+    setSameShippingAddressValue(isChecked);
+    let preData = { ...preInfo };
+    preData.shippingInfo = preData.billingInfo;
+    setPreInfo(preData);
+    setShippingId(addressId);
   };
 
-  const handleInfoSubmit = (e) => {
-    e.preventDefault();
+  function selectInfo(id, type) {
+    const resp = _address.find((e) => e._id === id);
+    if (resp) {
+      const {
+        name,
+        email,
+        phone,
+        house,
+        city,
+        state,
+        zipCode,
+        country,
+        addressTitle,
+      } = resp;
 
-    if (!preInfo.billingInfo?.fullName || !preInfo.billingInfo?.email) {
-      return toast.warning("Please fill Billing Information");
+      const data = {
+        fullName: name,
+        phone,
+        email,
+        house,
+        city,
+        state,
+        zipCode,
+        country,
+        addressTitle,
+      };
+
+      let preData = { ...preInfo };
+      preData[type === "billing_address" ? "billingInfo" : "shippingInfo"] =
+        data;
+      setPreInfo(preData);
+
+      type === "billing_address"
+        ? setAddressId(resp._id)
+        : setShippingId(resp._id);
     }
+  }
 
-    dispatch(
-      updateBillingData({
-        billingInfo: preInfo.billingInfo,
-        shippingInfo: preInfo.shippingInfo,
-        deliveryInfo: { type: "Default", cost: 0, area: null },
-      })
-    );
+  const handleInfoSubmit = async (e) => {
+    try {
+      e.preventDefault();
 
-    setVisibleTab(2);
-    setChangeTab(true);
+      if (!preInfo.billingInfo?.fullName && !preInfo.shippingInfo?.fullName) {
+        return toast.warning("Please Update The Billing Information");
+      }
+
+      dispatch(
+        updateBillingData({
+          billingInfo: preInfo.billingInfo,
+          shippingInfo: preInfo.shippingInfo,
+          deliveryInfo: { type: "Default", cost: 0, area: null },
+        })
+      );
+
+      setVisibleTab(2);
+      setChangeTab(true);
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   const decimalBalance = (num) => Math.round(num * 10) / 10;
 
+  const selectPaymentMethod = (e) => setPaymentMethod(e.target.value);
+
   const getTotalPrice = decimalBalance(
-    cartData.items.reduce((a, i) => a + i.qty * i.price, 0)
+    cartData.items.reduce(
+      (acc, item) => acc + item.qty * item.price,
+      0
+    )
   );
 
-  async function submitOrder() {
-    if (!cartData.items.length)
-      return toast.warning("Your cart is empty");
+  const discountPrice = (cartData.coupon.discount / 100) * getTotalPrice;
 
+  const getTotalVat = decimalBalance(
+    cartData.items.reduce(
+      (acc, item) =>
+        acc + checkPercentage(item.qty * item.price, item.vat),
+      0
+    )
+  );
+
+  const getTotalTax = decimalBalance(
+    cartData.items.reduce(
+      (acc, item) =>
+        acc + checkPercentage(item.qty * item.price, item.tax),
+      0
+    )
+  );
+
+  const finalPrice =
+    getTotalPrice +
+    getTotalVat +
+    getTotalTax +
+    0 -
+    discountPrice;
+
+  async function processOrder(method) {
+    const data = {
+      coupon: cartData.coupon,
+      products: cartData.items,
+      billingInfo: preInfo.billingInfo,
+      shippingInfo: preInfo.shippingInfo,
+      deliveryInfo: { type: "Default", cost: 0, area: null },
+      paymentData: {
+        method: method,
+        id: null,
+      },
+    };
+
+    const url = `/api/order/new`;
     const formData = new FormData();
-    formData.append(
-      "checkoutData",
-      JSON.stringify({
-        products: cartData.items,
-        billingInfo: preInfo.billingInfo,
-        shippingInfo: preInfo.shippingInfo,
-        paymentData: { method: paymentMethod },
-      })
-    );
+    formData.append("checkoutData", JSON.stringify(data));
+    const response = await postData(url, formData);
 
-    const res = await postData("/api/order/new", formData);
-
-    if (!res?.success) {
-      toast.error("Order failed");
-      return;
-    }
-
-    if (paymentMethod === "stripe") {
-      router.push(`/checkout/stripe`);
-    } else {
-      dispatch(resetCart());
-      router.push(`/checkout/success/${res.createdOrder.orderId}`);
-    }
+    response && response.success
+      ? (dispatch(resetCart()),
+        toast.success("Order successfully placed"),
+        router.push(`/checkout/success/${response.createdOrder._id}`))
+      : toast.error(response.message || "Something Went Wrong (500)");
   }
+
+  const submitOrder = async () => {
+    try {
+      if (cartData.items.length === 0) {
+        return toast.warning("Your Cart Is Empty");
+      }
+
+      if (!preInfo.billingInfo?.fullName && !preInfo.shippingInfo?.fullName) {
+        return toast.warning("Please Update The Billing Information");
+      }
+
+      if (paymentMethod === "cod") {
+        await processOrder("Cash On Delivery");
+      } else if (paymentMethod === "wallet") {
+        await processOrder("Wallet");
+      } else {
+        router.push(`/checkout/${paymentMethod}`);
+      }
+    } catch (err) {
+      toast.error(`Something Went Wrong ${err}`);
+      console.log(err);
+    }
+  };
 
   return (
     <>
       <HeadData title="Checkout" />
-
       <div className={classes.top}>
         <div className={classes.card}>
           <div className="custom_container">
-            <CheckoutNav
-              tab={visibleTab}
-              setTab={setVisibleTab}
-              changeTab={changeTab}
-            />
+            <div className="row">
+              <div className="col-lg-7">
+                <CheckoutNav
+                  tab={visibleTab}
+                  setTab={setVisibleTab}
+                  changeTab={changeTab}
+                />
 
-            {/* BILLING + SHIPPING */}
-            {visibleTab === 1 && (
-              <form
-                className={classes.checkout_form}
-                onSubmit={handleInfoSubmit}
-              >
-                <div className={classes.box}>
-                  {billingInfoJsx()}
-                  {shippingInfoJsx()}
-                  <button type="submit">Continue</button>
-                </div>
-              </form>
-            )}
+                <form
+                  className={classes.checkout_form}
+                  onSubmit={handleInfoSubmit}
+                  ref={infoForm}
+                  style={{ display: visibleTab === 1 ? "block" : "none" }}
+                >
+                  <div className={classes.box}>
+                    {billingInfoJsx()}
+                    {!sameShippingAddressValue && shippingInfoJsx()}
+                    <button type="submit">{t("continue")}</button>
+                  </div>
+                </form>
 
-            {/* PAYMENT */}
-            {visibleTab === 2 && (
-              <div className={classes.checkout_form}>
-                <div className={classes.box}>
-                  <PaymentGatewayList
-                    selectPaymentMethod={(e) =>
-                      setPaymentMethod(e.target.value)
-                    }
-                    submitOrder={submitOrder}
-                    settings={settings.settingsData.paymentGateway}
-                  />
+                <div
+                  className={classes.checkout_form}
+                  style={{ display: visibleTab === 2 ? "block" : "none" }}
+                >
+                  <div className={classes.box}>
+                    <PaymentGatewayList
+                      selectPaymentMethod={selectPaymentMethod}
+                      submitOrder={submitOrder}
+                      settings={settings.settingsData.paymentGateway}
+                    />
+                  </div>
                 </div>
               </div>
-            )}
+
+              <div className="col-lg-5">
+                <div className={classes.box}>{reviewJsx()}</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
+      <GlobalModal
+        isOpen={newCustomer}
+        handleCloseModal={() => {
+          setNewCustomer(false);
+          setChangeTab(false);  // 🔥 FIX: collapse address section
+          fetchAddress();
+        }}
+      >
+        <NewAddress hasMainAddress={hasMainAddress} />
+      </GlobalModal>
+
       {showLoginModal && (
         <div className={classes.overlay}>
-          <SignIn popup hidePopup={() => router.reload()} />
+          <SignIn
+            popup
+            hidePopup={() => {
+              setShowLoginModal(false);
+              router.reload();
+            }}
+          />
         </div>
       )}
     </>
   );
 
-  function billingInfoJsx() {
+  function reviewJsx() {
+    const validateCoupon = (data) => {
+      const coupon = {
+        code: data.code,
+        discount: data.discount,
+      };
+      dispatch(applyCoupon(coupon));
+    };
+
+    const checkCoupon = async () => {
+      try {
+        const data = await postData("/api/order/coupon", {
+          code: couponCode.current.value.trim(),
+        });
+
+        data && data.success
+          ? (toast.success(data.message), validateCoupon(data))
+          : toast.error(data.message);
+      } catch (err) {
+        toast.error("Something Went Wrong!");
+      }
+    };
+
     return (
-      <>
-        <h5>Billing Information</h5>
-        {["fullName", "email", "phone", "house", "city", "state", "zipCode"].map(
-          (f) => (
-            <input
-              key={f}
-              className="form-control mb-2"
-              placeholder={f}
-              value={preInfo.billingInfo[f] || ""}
-              onChange={(e) =>
-                handleChange("billingInfo", f, e.target.value)
-              }
-              required
-            />
-          )
-        )}
-      </>
+      <div>
+        <h5 className="mt-3">{t("items_in_your_cart")} :</h5>
+
+        <div className={classes.cart_item_list}>
+          <table className="table">
+            <thead className={classes.cart_item_header}>
+              <tr>
+                <th>Product</th>
+                <th className="text-end">Total</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {cartData.items.map((item, index) => (
+                <tr className={classes.cart_item} key={index}>
+                  <td>
+                    <div className={classes.cart_container}>
+                      <span className={classes.cart_image}>
+                        <ImageLoader
+                          src={item.image[0]?.url}
+                          height={50}
+                          width={50}
+                          alt={item.name}
+                        />
+                      </span>
+
+                      <span className={classes.cart_disc}>
+                        <b>{item.name}</b>
+                        {item.color.name && (
+                          <span>Color: {item.color.name}</span>
+                        )}
+                        {item.attribute.name && (
+                          <span>
+                            {`${item.attribute.for}: ${item.attribute.name}`}
+                          </span>
+                        )}
+                        <span>Qty: {item.qty}</span>
+                      </span>
+                    </div>
+                  </td>
+
+                  <td>{currencySymbol}{decimalBalance(item.price)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <table className={classes.priceTable}>
+            <tbody>
+              <tr>
+                <td colSpan="2"></td>
+                <td className="text-end">{t("sub_total")}:</td>
+                <td className="text-end">
+                  {currencySymbol}
+                  {decimalBalance(getTotalPrice)}
+                </td>
+              </tr>
+
+              <tr>
+                <td colSpan="2"></td>
+                <td className="text-end">{t("tax")}:</td>
+                <td className="text-end">
+                  {currencySymbol}
+                  {decimalBalance(getTotalTax)}
+                </td>
+              </tr>
+
+              <tr>
+                <td colSpan="2"></td>
+                <td className="text-end">{t("vat")}:</td>
+                <td className="text-end">
+                  {currencySymbol}
+                  {decimalBalance(getTotalVat)}
+                </td>
+              </tr>
+
+              <tr>
+                <td colSpan="2"></td>
+                <td className="text-end">{t("discount")}:</td>
+                <td className="text-end">
+                  {currencySymbol}
+                  {decimalBalance(discountPrice)}
+                </td>
+              </tr>
+
+              <tr>
+                <td colSpan="2"></td>
+                <td className="text-end">{t("delivery_charge")}:</td>
+                <td className="text-end">{currencySymbol}{decimalBalance(0)}</td>
+              </tr>
+
+              <tr>
+                <td colSpan="2"></td>
+                <td className="text-end fw-bold">{t("total")}:</td>
+                <td className="text-end fw-bold">
+                  {currencySymbol}
+                  {decimalBalance(finalPrice)}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div className="input-group mt-3">
+          <input
+            type="text"
+            ref={couponCode}
+            defaultValue={cartData.coupon.code}
+            className="form-control p-auto"
+            placeholder={t("please_enter_promo_code")}
+          />
+
+          <div className="input-group-append">
+            <button onClick={checkCoupon}>{t("apply_discount")}</button>
+          </div>
+        </div>
+      </div>
     );
   }
 
   function shippingInfoJsx() {
     return (
-      <>
-        <h5 className="mt-4">Shipping Information</h5>
-        {["fullName", "phone", "house", "city", "state", "zipCode"].map((f) => (
-          <input
-            key={f}
-            className="form-control mb-2"
-            placeholder={f}
-            value={preInfo.shippingInfo[f] || ""}
-            onChange={(e) =>
-              handleChange("shippingInfo", f, e.target.value)
-            }
-          />
-        ))}
-      </>
+      <div>
+        <div className="mb-3">
+          <h5>{t("shipping_info")}</h5>
+
+          <div className={classes.payment_list}>
+            {_address.map((x, i) => (
+              <label className={classes.payment_card_label} key={i}>
+                <input
+                  type="radio"
+                  name="shipping_address"
+                  value={x._id}
+                  defaultChecked={x._id === shippingId}
+                  onChange={() => selectInfo(x._id, "shipping_address")}
+                />
+
+                <div className={`${classes.payment_card} ${classes.address_card}`}>
+                  <span>{x.name}</span>
+                  <span>{x.phone}</span>
+                  <span>{`${x.house} ${x.state} ${x.zipCode} ${x.country}`}</span>
+
+                  {x.addressType === "main address" && (
+                    <div className="badge bg-primary">default</div>
+                  )}
+                </div>
+              </label>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  function billingInfoJsx() {
+    return (
+      <div>
+        {session && (
+          <button
+            className={classes.updateButton}
+            onClick={() => setNewCustomer(true)}
+            type="button"
+          >
+            {t("add_address")}
+          </button>
+        )}
+
+        <div className="mb-3">
+          <h5 className={classes.top_space}>{t("billing_info")}</h5>
+
+          <div className={classes.payment_list}>
+            {_address.map((x, i) => (
+              <label className={classes.payment_card_label} key={i}>
+                <input
+                  type="radio"
+                  name="billing_address"
+                  value={x._id}
+                  defaultChecked={x._id === addressId}
+                  onChange={() => selectInfo(x._id, "billing_address")}
+                />
+
+                <div className={`${classes.payment_card} ${classes.address_card}`}>
+                  <span>{x.name}</span>
+                  <span>{x.phone}</span>
+                  <span>{`${x.house} ${x.state} ${x.zipCode} ${x.country}`}</span>
+
+                  {x.addressType === "main address" && (
+                    <div className="badge bg-primary">default</div>
+                  )}
+                </div>
+              </label>
+            ))}
+          </div>
+
+          <div className="py-2 mt-4 form-check">
+            <input
+              type="checkbox"
+              className="form-check-input"
+              id="Check1"
+              onClick={sameShippingAddress}
+            />
+
+            <label className="form-check-label" htmlFor="Check1">
+              {t("shipping_address_same_as_billing_address")}
+            </label>
+          </div>
+        </div>
+      </div>
     );
   }
 };
