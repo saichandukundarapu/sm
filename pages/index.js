@@ -39,48 +39,57 @@ function HomePage({ data, error }) {
 
   return (
     <>
-      {/* 🔥 TOP OFFER SLIDER STYLES */}
+      {/* 🧩 AMAZON-STYLE OFFER TILES */}
       <style jsx>{`
-        .offer-slider-wrapper {
-          width: 100%;
-          margin: 12px 0;
-          overflow: hidden;
-        }
-
-        .offer-slider {
-          display: flex;
-          gap: 16px;
-          overflow-x: auto;
-          scroll-snap-type: x mandatory;
-          -webkit-overflow-scrolling: touch;
-        }
-
-        .offer-slide {
-          flex: 0 0 100%;
+        .offer-section {
           max-width: 1200px;
-          margin: auto;
-          scroll-snap-align: center;
-          border-radius: 12px;
+          margin: 16px auto;
+          padding: 0 12px;
+        }
+
+        .offer-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 16px;
+        }
+
+        .offer-card {
+          background: #fff;
+          border-radius: 10px;
           overflow: hidden;
           cursor: pointer;
-          box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
-          transition: transform 0.3s ease, box-shadow 0.3s ease;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+          transition: transform 0.25s ease, box-shadow 0.25s ease;
         }
 
-        .offer-slide:hover {
+        .offer-card:hover {
           transform: translateY(-2px);
-          box-shadow: 0 10px 26px rgba(0, 0, 0, 0.25);
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
         }
 
-        .offer-slide img {
+        .offer-card img {
           width: 100%;
-          height: auto;
+          height: 220px;
+          object-fit: cover;
           display: block;
         }
 
+        /* Mobile: horizontal slider */
         @media (max-width: 768px) {
-          .offer-slide {
-            border-radius: 8px;
+          .offer-grid {
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            gap: 12px;
+          }
+
+          .offer-card {
+            min-width: 85%;
+            scroll-snap-align: center;
+          }
+
+          .offer-card img {
+            height: 180px;
           }
         }
       `}</style>
@@ -91,12 +100,12 @@ function HomePage({ data, error }) {
         <>
           <HeadData />
 
-          {/* 🔥 TOP PROMOTIONAL SLIDER */}
-          <div className="offer-slider-wrapper">
-            <div className="offer-slider">
-              {/* SLIDE 1 */}
+          {/* 🔥 TOP SMALL PROMOTIONAL SECTION */}
+          <div className="offer-section">
+            <div className="offer-grid">
+              {/* CARD 1 */}
               <div
-                className="offer-slide"
+                className="offer-card"
                 onClick={() =>
                   (window.location.href =
                     "https://brisbanesurgicalsupplies.com/product/aspire-stride-adjustable-seat-walker-rollator-55su33lm")
@@ -104,13 +113,13 @@ function HomePage({ data, error }) {
               >
                 <img
                   src="https://nextlife-store-images.s3.eu-north-1.amazonaws.com/8858987ojxdjvs8898585atbkfrt7cc1e2bd-b40f-4f58-a9f9-b7945cb3d346.png"
-                  alt="Aspire Stride Adjustable Seat Walker Rollator Offer"
+                  alt="Aspire Stride Walker Offer"
                 />
               </div>
 
-              {/* SLIDE 2 */}
+              {/* CARD 2 */}
               <div
-                className="offer-slide"
+                className="offer-card"
                 onClick={() =>
                   (window.location.href =
                     "https://brisbanesurgicalsupplies.com/product/resmed-airsense-11-autoset-cpap-machine-55ll05kv")
@@ -118,7 +127,7 @@ function HomePage({ data, error }) {
               >
                 <img
                   src="https://nextlife-store-images.s3.eu-north-1.amazonaws.com/3000107kobzocy1330231bnbckyoimage_2026-01-02_134517418.png"
-                  alt="ResMed AirSense 11 AutoSet CPAP Machine Offer"
+                  alt="ResMed AirSense 11 CPAP Offer"
                 />
               </div>
             </div>
@@ -152,7 +161,7 @@ function HomePage({ data, error }) {
         </>
       )}
 
-      {/* 🔒 PRODUCT QUICK VIEW MODAL */}
+      {/* 🔒 QUICK VIEW MODAL */}
       <GlobalModal
         small={false}
         isOpen={isOpen}
@@ -175,6 +184,7 @@ export const getServerSideProps = wrapper.getServerSideProps(
           "public, s-maxage=10800, stale-while-revalidate=59"
         );
       }
+
       const _data = await homePageData();
       const data = JSON.parse(JSON.stringify(_data));
 
