@@ -3,6 +3,7 @@ import { buffer } from "micro";
 import dbConnect from "../../../utils/dbConnect";
 import orderModel from "../../../models/order";
 import { generateReceiptPdf } from "../../../utils/generateReceiptPdf";
+import sendEmail from "../../../lib/sendEmail";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -56,17 +57,57 @@ export default async function handler(req, res) {
       return res.json({ received: true });
     }
 
+    // ================= UPDATE ORDER =================
     order.paymentStatus = "Paid";
     order.paymentMethod = "Stripe";
+    order.status = "Pending";
     order.paidAt = new Date();
 
-    // 🔥 Generate receipt only once
+    // ================= GENERATE RECEIPT =================
     if (!order.receiptUrl) {
       const receiptUrl = await generateReceiptPdf(order);
       order.receiptUrl = receiptUrl;
     }
 
     await order.save();
+
+    // ================= SEND EMAILS =================
+    const customerEmail = order.billingInfo?.email;
+    const adminEmail = process.env.ADMIN_EMAIL;
+
+    const emailHtml = `
+      <h2>Order Confirmation</h2>
+      <p>Thank you for your purchase.</p>
+
+      <p><strong>Order ID:</strong> ${order.orderId}</p>
+      <p><strong>Total Paid:</strong> $${order.payAmount}</p>
+
+      <p>
+        <a href="${order.receiptUrl}" target="_blank">
+          Download Receipt
+        </a>
+      </p>
+
+      <p>We will process your order shortly.</p>
+    `;
+
+    // ✅ CUSTOMER EMAIL
+    if (customerEmail) {
+      await sendEmail({
+        to: customerEmail,
+        subject: `Order Confirmation - ${order.orderId}`,
+        html: emailHtml,
+      });
+    }
+
+    // ✅ ADMIN EMAIL
+    if (adminEmail) {
+      await sendEmail({
+        to: adminEmail,
+        subject: `New Paid Order - ${order.orderId}`,
+        html: emailHtml,
+      });
+    }
   }
 
   res.json({ received: true });
