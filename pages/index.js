@@ -1,4 +1,41 @@
 
+import dynamic from "next/dynamic";
+import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import HeadData from "~/components/Head";
+import { setSettingsData } from "~/lib/clientFunctions";
+import homePageData from "~/lib/dataLoader/home";
+import { wrapper } from "~/redux/store";
+
+const Error500 = dynamic(() => import("~/components/error/500"));
+const Header = dynamic(() => import("~/components/Header/header"));
+const Banner = dynamic(() => import("~/components/Banner/banner"));
+
+const CategoryList = dynamic(() =>
+  import("~/components/Categories/categoriesList")
+);
+
+const Collection = dynamic(() =>
+  import("~/components/Collection/collection")
+);
+
+const BrandCardList = dynamic(() =>
+  import("~/components/Brand/brandList")
+);
+
+const ProductDetails = dynamic(() =>
+  import("~/components/Shop/Product/productDetails")
+);
+
+const ProductList = dynamic(() =>
+  import("~/components/ProductListView")
+);
+
+const GlobalModal = dynamic(() =>
+  import("~/components/Ui/Modal/modal")
+);
+
 function HomePage({ data, error }) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
@@ -23,17 +60,24 @@ function HomePage({ data, error }) {
         <>
           <HeadData />
 
-          {/* Website Header */}
-          <Header />
+          {/* Existing Header and Carousel */}
+          <Header
+            carousel={
+              data.additional &&
+              data.additional.homePage.carousel
+            }
+          />
 
-          {/* Custom Brisbane Surgical Supplies Hero Banner */}
+          {/* Brisbane Surgical Supplies Custom Banner */}
           <section
             style={{
               width: "100%",
+              maxWidth: "1920px",
+              margin: "0 auto",
+              padding: "0",
               backgroundColor: "#ffffff",
               overflow: "hidden",
-              padding: "0",
-              margin: "0 auto"
+              position: "relative"
             }}
           >
             <a
@@ -42,6 +86,7 @@ function HomePage({ data, error }) {
               style={{
                 display: "block",
                 width: "100%",
+                textDecoration: "none",
                 lineHeight: 0
               }}
             >
@@ -53,54 +98,102 @@ function HomePage({ data, error }) {
                   width: "100%",
                   height: "auto",
                   maxWidth: "1920px",
-                  margin: "0 auto",
-                  objectFit: "contain"
+                  objectFit: "contain",
+                  objectPosition: "center",
+                  margin: "0 auto"
                 }}
               />
             </a>
           </section>
 
-          {/* Homepage Categories */}
+          {/* Existing Categories */}
           <CategoryList categoryList={data.category} />
 
-          {/* New Products */}
-          <ProductList title={t("new_products")} type="new" />
+          {/* Existing New Products */}
+          <ProductList
+            title={t("new_products")}
+            type="new"
+          />
 
           <div className="content_spacing" />
 
-          {/* Existing Banner */}
+          {/* Existing Homepage Banner */}
           <Banner
-            banner={data.additional && data.additional.homePage.banner}
+            banner={
+              data.additional &&
+              data.additional.homePage.banner
+            }
           />
 
-          {/* Trending Products */}
-          <ProductList title={t("trending_products")} type="trending" />
+          {/* Existing Trending Products */}
+          <ProductList
+            title={t("trending_products")}
+            type="trending"
+          />
 
           <div className="content_spacing" />
 
-          {/* Collections */}
+          {/* Existing Collections */}
           <Collection
-            data={data.additional && data.additional.homePage.collection}
+            data={
+              data.additional &&
+              data.additional.homePage.collection
+            }
           />
 
-          {/* Best Selling Products */}
-          <ProductList title={t("best_selling")} type="bestselling" />
+          {/* Existing Best Selling Products */}
+          <ProductList
+            title={t("best_selling")}
+            type="bestselling"
+          />
 
+          {/* Existing Brands */}
           <BrandCardList items={data.brand || []} />
 
           <div className="content_spacing" />
         </>
       )}
 
+      {/* Existing Product Modal */}
       <GlobalModal
         small={false}
         isOpen={isOpen}
         handleCloseModal={handleCloseModal}
       >
         {router.query.slug && (
-          <ProductDetails productSlug={router.query.slug} />
+          <ProductDetails
+            productSlug={router.query.slug}
+          />
         )}
       </GlobalModal>
     </>
   );
 }
+
+export const getServerSideProps = wrapper.getServerSideProps(
+  (store) =>
+    async ({ req, res, locale, ...etc }) => {
+      if (res) {
+        res.setHeader(
+          "Cache-Control",
+          "public, s-maxage=10800, stale-while-revalidate=59"
+        );
+      }
+
+      const _data = await homePageData();
+      const data = JSON.parse(JSON.stringify(_data));
+
+      if (data.success) {
+        setSettingsData(store, data);
+      }
+
+      return {
+        props: {
+          data,
+          error: !data.success
+        }
+      };
+    }
+);
+
+export default HomePage;
