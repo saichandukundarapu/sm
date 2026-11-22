@@ -57,6 +57,13 @@ function HomePage({ data, error }) {
   const customSlides = [
     {
       image:
+        "https://brisbane-surgical-supplies-assets.s3.eu-north-1.amazonaws.com/7252755osgqfmp6266577skjszrnPremium+Medical+Supplies+Banner.png",
+      alt: "brisbane-surgical-supplies-assets",
+      title: "brisbane-surgical-supplies-assets",
+      url: "/gallery"   
+    },
+    {
+      image:
         "https://brisbane-surgical-supplies-assets.s3.eu-north-1.amazonaws.com/CPAP+Therapy+for+Better+Sleep.png",
       alt: "CPAP Therapy for Better Sleep",
       title: "CPAP Therapy for Better Sleep",
