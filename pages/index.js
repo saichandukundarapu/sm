@@ -39,7 +39,6 @@ const GlobalModal = dynamic(() =>
 function HomePage({ data, error }) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
-  const [activeSlide, setActiveSlide] = useState(0);
   const { t } = useTranslation();
 
   const handleCloseModal = () => {
@@ -53,53 +52,24 @@ function HomePage({ data, error }) {
     }
   }, [router.query.slug]);
 
-  // Custom Brisbane Surgical Supplies slider banners
-  const customSlides = [
+  // Brisbane Surgical Supplies promotional banners
+  const customBanners = [
     {
       image:
         "https://brisbane-surgical-supplies-assets.s3.eu-north-1.amazonaws.com/CPAP+Therapy+for+Better+Sleep.png",
-      alt: "CPAP Therapy for Better Sleep",
-      title: "CPAP Therapy for Better Sleep",
-      url: "/gallery?category=cpap-masks-and-machines"
+      alt: "CPAP Therapy for Better Sleep"
     },
     {
       image:
         "https://brisbane-surgical-supplies-assets.s3.eu-north-1.amazonaws.com/CPAP+Masks+and+Machines+Essentials-1.png",
-      alt: "CPAP Masks and Machines Essentials",
-      title: "CPAP Masks and Machines",
-      url: "/gallery?category=cpap-masks-and-machines"
+      alt: "CPAP Masks and Machines Essentials"
     },
     {
       image:
         "https://brisbane-surgical-supplies-assets.s3.eu-north-1.amazonaws.com/Quit+Smoking%2C+Breathe+Freely-2.png",
-      alt: "Quit Smoking, Breathe Freely",
-      title: "Quit Smoking, Breathe Freely",
-      url: "/gallery"
+      alt: "Quit Smoking, Breathe Freely"
     }
   ];
-
-  // Automatically change slides every 5 seconds
-  useEffect(() => {
-    const sliderTimer = setInterval(() => {
-      setActiveSlide((current) =>
-        (current + 1) % customSlides.length
-      );
-    }, 5000);
-
-    return () => clearInterval(sliderTimer);
-  }, []);
-
-  const previousSlide = () => {
-    setActiveSlide((current) =>
-      current === 0 ? customSlides.length - 1 : current - 1
-    );
-  };
-
-  const nextSlide = () => {
-    setActiveSlide((current) =>
-      (current + 1) % customSlides.length
-    );
-  };
 
   return (
     <>
@@ -117,7 +87,7 @@ function HomePage({ data, error }) {
             }
           />
 
-          {/* Brisbane Surgical Supplies Custom Image Slider */}
+          {/* Brisbane Surgical Supplies Custom Banners */}
           <section
             style={{
               width: "100%",
@@ -125,122 +95,37 @@ function HomePage({ data, error }) {
               margin: "0 auto",
               padding: "0",
               backgroundColor: "#ffffff",
-              overflow: "hidden",
-              position: "relative"
+              overflow: "hidden"
             }}
           >
-            <a
-              href={customSlides[activeSlide].url}
-              aria-label={customSlides[activeSlide].title}
-              style={{
-                display: "block",
-                width: "100%",
-                lineHeight: 0,
-                textDecoration: "none"
-              }}
-            >
-              <img
-                key={customSlides[activeSlide].image}
-                src={customSlides[activeSlide].image}
-                alt={customSlides[activeSlide].alt}
+            {customBanners.map((banner, index) => (
+              <div
+                key={index}
                 style={{
-                  display: "block",
                   width: "100%",
-                  height: "auto",
-                  maxWidth: "1920px",
-                  objectFit: "contain",
-                  objectPosition: "center",
-                  margin: "0 auto"
+                  margin: "0 auto",
+                  padding: "0",
+                  lineHeight: 0,
+                  backgroundColor: "#ffffff"
                 }}
-              />
-            </a>
-
-            {/* Previous Button */}
-            <button
-              type="button"
-              onClick={previousSlide}
-              aria-label="Previous banner"
-              style={{
-                position: "absolute",
-                top: "50%",
-                left: "20px",
-                transform: "translateY(-50%)",
-                width: "48px",
-                height: "48px",
-                borderRadius: "50%",
-                border: "none",
-                background: "rgba(255,255,255,0.85)",
-                color: "#123b59",
-                fontSize: "28px",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                boxShadow: "0 2px 10px rgba(0,0,0,0.12)"
-              }}
-            >
-              &#8249;
-            </button>
-
-            {/* Next Button */}
-            <button
-              type="button"
-              onClick={nextSlide}
-              aria-label="Next banner"
-              style={{
-                position: "absolute",
-                top: "50%",
-                right: "20px",
-                transform: "translateY(-50%)",
-                width: "48px",
-                height: "48px",
-                borderRadius: "50%",
-                border: "none",
-                background: "rgba(255,255,255,0.85)",
-                color: "#123b59",
-                fontSize: "28px",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                boxShadow: "0 2px 10px rgba(0,0,0,0.12)"
-              }}
-            >
-              &#8250;
-            </button>
-
-            {/* Slider Indicators */}
-            <div
-              style={{
-                position: "absolute",
-                bottom: "15px",
-                left: "50%",
-                transform: "translateX(-50%)",
-                display: "flex",
-                alignItems: "center",
-                gap: "10px"
-              }}
-            >
-              {customSlides.map((slide, index) => (
-                <button
-                  key={slide.image}
-                  type="button"
-                  onClick={() => setActiveSlide(index)}
-                  aria-label={`Go to banner ${index + 1}`}
+              >
+                <img
+                  src={banner.image}
+                  alt={banner.alt}
+                  loading={index === 0 ? "eager" : "lazy"}
                   style={{
-                    width: activeSlide === index ? "26px" : "10px",
-                    height: "10px",
-                    borderRadius: "20px",
-                    border: "none",
-                    padding: 0,
-                    background:
-                      activeSlide === index ? "#087f83" : "#b8c5cc",
-                    cursor: "pointer",
-                    transition: "all 0.3s ease"
+                    display: "block",
+                    width: "100%",
+                    height: "auto",
+                    maxWidth: "1920px",
+                    margin: "0 auto",
+                    objectFit: "contain",
+                    objectPosition: "center",
+                    border: "none"
                   }}
                 />
-              ))}
-            </div>
+              </div>
+            ))}
           </section>
 
           {/* Existing Categories */}
