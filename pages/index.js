@@ -1,30 +1,9 @@
-import dynamic from "next/dynamic";
-import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
-import HeadData from "~/components/Head";
-import { setSettingsData } from "~/lib/clientFunctions";
-import homePageData from "~/lib/dataLoader/home";
-import { wrapper } from "~/redux/store";
-
-const Error500 = dynamic(() => import("~/components/error/500"));
-const Header = dynamic(() => import("~/components/Header/header"));
-const Banner = dynamic(() => import("~/components/Banner/banner"));
-const CategoryList = dynamic(() =>
-  import("~/components/Categories/categoriesList")
-);
-const Collection = dynamic(() => import("~/components/Collection/collection"));
-const BrandCardList = dynamic(() => import("~/components/Brand/brandList"));
-const ProductDetails = dynamic(() =>
-  import("~/components/Shop/Product/productDetails")
-);
-const ProductList = dynamic(() => import("~/components/ProductListView"));
-const GlobalModal = dynamic(() => import("~/components/Ui/Modal/modal"));
 
 function HomePage({ data, error }) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const { t } = useTranslation();
+
   const handleCloseModal = () => {
     router.push("/", undefined, { scroll: false });
     setIsOpen(false);
@@ -43,23 +22,76 @@ function HomePage({ data, error }) {
       ) : (
         <>
           <HeadData />
-          <Header
-            carousel={data.additional && data.additional.homePage.carousel}
-          />
+
+          {/* Website Header */}
+          <Header />
+
+          {/* Custom Brisbane Surgical Supplies Hero Banner */}
+          <section
+            style={{
+              width: "100%",
+              backgroundColor: "#ffffff",
+              overflow: "hidden",
+              padding: "0",
+              margin: "0 auto"
+            }}
+          >
+            <a
+              href="/shop"
+              aria-label="Shop Brisbane Surgical Supplies"
+              style={{
+                display: "block",
+                width: "100%",
+                lineHeight: 0
+              }}
+            >
+              <img
+                src="https://brisbane-surgical-supplies-assets.s3.eu-north-1.amazonaws.com/7252755osgqfmp6266577skjszrnPremium+Medical+Supplies+Banner.png"
+                alt="Brisbane Surgical Supplies - Premium Medical and Surgical Supplies"
+                style={{
+                  display: "block",
+                  width: "100%",
+                  height: "auto",
+                  maxWidth: "1920px",
+                  margin: "0 auto",
+                  objectFit: "contain"
+                }}
+              />
+            </a>
+          </section>
+
+          {/* Homepage Categories */}
           <CategoryList categoryList={data.category} />
+
+          {/* New Products */}
           <ProductList title={t("new_products")} type="new" />
+
           <div className="content_spacing" />
-          <Banner banner={data.additional && data.additional.homePage.banner} />
+
+          {/* Existing Banner */}
+          <Banner
+            banner={data.additional && data.additional.homePage.banner}
+          />
+
+          {/* Trending Products */}
           <ProductList title={t("trending_products")} type="trending" />
+
           <div className="content_spacing" />
+
+          {/* Collections */}
           <Collection
             data={data.additional && data.additional.homePage.collection}
           />
+
+          {/* Best Selling Products */}
           <ProductList title={t("best_selling")} type="bestselling" />
+
           <BrandCardList items={data.brand || []} />
+
           <div className="content_spacing" />
         </>
       )}
+
       <GlobalModal
         small={false}
         isOpen={isOpen}
@@ -72,28 +104,3 @@ function HomePage({ data, error }) {
     </>
   );
 }
-
-export const getServerSideProps = wrapper.getServerSideProps(
-  (store) =>
-    async ({ req, res, locale, ...etc }) => {
-      if (res) {
-        res.setHeader(
-          "Cache-Control",
-          "public, s-maxage=10800, stale-while-revalidate=59"
-        );
-      }
-      const _data = await homePageData();
-      const data = JSON.parse(JSON.stringify(_data));
-      if (data.success) {
-        setSettingsData(store, data);
-      }
-      return {
-        props: {
-          data,
-          error: !data.success,
-        },
-      };
-    }
-);
-
-export default HomePage;
