@@ -42,7 +42,10 @@ function HomePage({ data, error }) {
         <Error500 />
       ) : (
         <>
-          
+          <HeadData />
+          <Header
+            carousel={data.additional && data.additional.homePage.carousel}
+          />
           <CategoryList categoryList={data.category} />
           <ProductList title={t("new_products")} type="new" />
           <div className="content_spacing" />
