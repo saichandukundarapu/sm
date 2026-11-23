@@ -1,580 +1,563 @@
+
 import dynamic from "next/dynamic";
-import { useRouter } from "next/router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useDispatch, useSelector } from "react-redux";
+import { useRouter } from "next/router";
 import { toast } from "react-toastify";
-import classes from "~/components/Checkout/checkout.module.css";
-import NewAddress from "~/components/Profile/addressForm";
-import HeadData from "~/components/Head";
-import GlobalModal from "~/components/Ui/Modal/modal";
-import { checkPercentage, fetchData, postData } from "~/lib/clientFunctions";
-import { applyCoupon, resetCart, updateBillingData } from "~/redux/cart.slice";
-import SignIn from "~/components/Auth/signin";
 
-const CheckoutNav = dynamic(() => import("~/components/Checkout/checkoutNav"));
-const PaymentGatewayList = dynamic(() =>
-  import("~/components/Checkout/paymentGatewayList")
-);
+import classes from "~/components/Checkout/checkout.module.css";
+import HeadData from "~/components/Head";
+import { checkPercentage, postData } from "~/lib/clientFunctions";
+import { applyCoupon, resetCart } from "~/redux/cart.slice";
+
 const ImageLoader = dynamic(() => import("~/components/Image"));
+
+const emptyAddress = {
+  fullName: "",
+  email: "",
+  phone: "",
+  house: "",
+  city: "",
+  state: "",
+  zipCode: "",
+  country: "Australia",
+};
 
 const Checkout = () => {
   const cartData = useSelector((state) => state.cart);
   const settings = useSelector((state) => state.settings);
-  const currencySymbol = settings.settingsData.currency.symbol;
+
+  const currencySymbol =
+    settings?.settingsData?.currency?.symbol || "$";
+
   const dispatch = useDispatch();
   const router = useRouter();
-  const couponCode = useRef("");
-  const { session, status } = useSelector((state) => state.localSession);
-  const [visibleTab, setVisibleTab] = useState(1);
-  const [changeTab, setChangeTab] = useState(false);
-  const [sameShippingAddressValue, setSameShippingAddressValue] =
-    useState(false);
-  const [deliveryInfo, setDeliveryInfo] = useState({});
-  const [_address, _setAddress] = useState([]);
-  const [addressId, setAddressId] = useState("");
-  const [shippingId, setShippingId] = useState("");
-  const [hasMainAddress, setHasMainAddress] = useState(false);
-  const [preInfo, setPreInfo] = useState({
-    billingInfo: {},
-    shippingInfo: {},
-  });
-  const [paymentMethod, setPaymentMethod] = useState("cod");
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  const [newCustomer, setNewCustomer] = useState(false);
-  const infoForm = useRef();
   const { t } = useTranslation();
 
+  const [customer, setCustomer] = useState(emptyAddress);
+  const [couponCode, setCouponCode] = useState(
+    cartData?.coupon?.code || ""
+  );
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
-    if (status === "unauthenticated") {
-      setShowLoginModal(true);
+    if (cartData?.billingInfo?.fullName) {
+      setCustomer({
+        ...emptyAddress,
+        ...cartData.billingInfo,
+      });
     }
-  }, [status]);
+  }, [cartData?.loaded]);
 
-  // Default free delivery
-  useEffect(() => {
-    setDeliveryInfo({ type: "Default", cost: 0, area: null });
-  }, []);
+  const handleChange = (e) => {
+    const { name, value } = e.target;
 
-  async function fetchAddress() {
-    try {
-      const response = await fetchData(`/api/profile/address`);
-      if (response.success && response.user?.address) {
-        _setAddress(response.user.address);
-        const resp = response.user.address.find(
-          (e) => e.addressType === "main address"
-        );
-
-        if (resp) {
-          const {
-            name,
-            email,
-            phone,
-            house,
-            city,
-            state,
-            zipCode,
-            country,
-            addressTitle,
-          } = resp;
-
-          const data = {
-            fullName: name,
-            phone,
-            email,
-            house,
-            city,
-            state,
-            zipCode,
-            country,
-            addressTitle,
-          };
-
-          const preData = {
-            billingInfo: data,
-            shippingInfo: data,
-          };
-
-          setPreInfo(preData);
-          setAddressId(resp._id);
-          setShippingId(resp._id);
-          setHasMainAddress(true);
-        }
-      } else {
-        const { billingInfo, shippingInfo } = cartData;
-        setPreInfo({ billingInfo, shippingInfo });
-      }
-    } catch (err) {
-      console.log(err);
-    }
-  }
-
-  useEffect(() => {
-    fetchAddress();
-  }, []);
-
-  const sameShippingAddress = (e) => {
-    const isChecked = e.target.checked;
-    setSameShippingAddressValue(isChecked);
-    let preData = { ...preInfo };
-    preData.shippingInfo = preData.billingInfo;
-    setPreInfo(preData);
-    setShippingId(addressId);
+    setCustomer((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
   };
 
-  function selectInfo(id, type) {
-    const resp = _address.find((e) => e._id === id);
-    if (resp) {
-      const {
-        name,
-        email,
-        phone,
-        house,
-        city,
-        state,
-        zipCode,
-        country,
-        addressTitle,
-      } = resp;
-
-      const data = {
-        fullName: name,
-        phone,
-        email,
-        house,
-        city,
-        state,
-        zipCode,
-        country,
-        addressTitle,
-      };
-
-      let preData = { ...preInfo };
-      preData[type === "billing_address" ? "billingInfo" : "shippingInfo"] =
-        data;
-      setPreInfo(preData);
-
-      type === "billing_address"
-        ? setAddressId(resp._id)
-        : setShippingId(resp._id);
-    }
-  }
-
-  const handleInfoSubmit = async (e) => {
-    try {
-      e.preventDefault();
-
-      if (!preInfo.billingInfo?.fullName && !preInfo.shippingInfo?.fullName) {
-        return toast.warning("Please Update The Billing Information");
-      }
-
-      dispatch(
-        updateBillingData({
-          billingInfo: preInfo.billingInfo,
-          shippingInfo: preInfo.shippingInfo,
-          deliveryInfo: { type: "Default", cost: 0, area: null },
-        })
-      );
-
-      setVisibleTab(2);
-      setChangeTab(true);
-    } catch (err) {
-      console.log(err);
-    }
-  };
-
-  const decimalBalance = (num) => Math.round(num * 10) / 10;
-
-  const selectPaymentMethod = (e) => setPaymentMethod(e.target.value);
+  const decimalBalance = (num) =>
+    Math.round((Number(num) || 0) * 10) / 10;
 
   const getTotalPrice = decimalBalance(
-    cartData.items.reduce(
+    (cartData.items || []).reduce(
       (acc, item) => acc + item.qty * item.price,
       0
     )
   );
 
-  const discountPrice = (cartData.coupon.discount / 100) * getTotalPrice;
+  const discountPrice =
+    ((cartData.coupon?.discount || 0) / 100) * getTotalPrice;
 
   const getTotalVat = decimalBalance(
-    cartData.items.reduce(
+    (cartData.items || []).reduce(
       (acc, item) =>
-        acc + checkPercentage(item.qty * item.price, item.vat),
+        acc +
+        checkPercentage(
+          item.qty * item.price,
+          item.vat || 0
+        ),
       0
     )
   );
 
   const getTotalTax = decimalBalance(
-    cartData.items.reduce(
+    (cartData.items || []).reduce(
       (acc, item) =>
-        acc + checkPercentage(item.qty * item.price, item.tax),
+        acc +
+        checkPercentage(
+          item.qty * item.price,
+          item.tax || 0
+        ),
       0
     )
   );
 
-  const finalPrice =
+  const finalPrice = decimalBalance(
     getTotalPrice +
-    getTotalVat +
-    getTotalTax +
-    0 -
-    discountPrice;
+      getTotalVat +
+      getTotalTax -
+      discountPrice
+  );
 
-  async function processOrder(method) {
-    const data = {
-      coupon: cartData.coupon,
+  const checkCoupon = async () => {
+    if (!couponCode.trim()) {
+      return toast.warning("Please enter a coupon code");
+    }
+
+    try {
+      const data = await postData("/api/order/coupon", {
+        code: couponCode.trim(),
+      });
+
+      if (data?.success) {
+        dispatch(
+          applyCoupon({
+            code: data.code,
+            discount: data.discount,
+          })
+        );
+
+        toast.success(data.message);
+      } else {
+        toast.error(data?.message || "Invalid coupon");
+      }
+    } catch (error) {
+      toast.error("Unable to apply coupon");
+    }
+  };
+
+  const submitOrder = async (e) => {
+    e.preventDefault();
+
+    if (loading) return;
+
+    if (!cartData.items || cartData.items.length === 0) {
+      return toast.warning("Your cart is empty");
+    }
+
+    const requiredFields = [
+      ["fullName", "Please enter your full name"],
+      ["email", "Please enter your email"],
+      ["phone", "Please enter your phone number"],
+      ["house", "Please enter your street address"],
+      ["city", "Please enter your suburb or city"],
+      ["state", "Please enter your state"],
+      ["zipCode", "Please enter your postcode"],
+      ["country", "Please enter your country"],
+    ];
+
+    for (const [field, message] of requiredFields) {
+      if (!String(customer[field] || "").trim()) {
+        return toast.warning(message);
+      }
+    }
+
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailPattern.test(customer.email)) {
+      return toast.warning("Please enter a valid email address");
+    }
+
+    const customerInfo = {
+      ...customer,
+      fullName: customer.fullName.trim(),
+      email: customer.email.trim(),
+      phone: customer.phone.trim(),
+    };
+
+    const orderData = {
+      coupon: cartData.coupon || {
+        code: "",
+        discount: 0,
+      },
       products: cartData.items,
-      billingInfo: preInfo.billingInfo,
-      shippingInfo: preInfo.shippingInfo,
-      deliveryInfo: { type: "Default", cost: 0, area: null },
+      billingInfo: customerInfo,
+      shippingInfo: customerInfo,
+      deliveryInfo: {
+        type: "Default",
+        cost: 0,
+        area: null,
+      },
       paymentData: {
-        method: method,
+        method: "Order Request",
         id: null,
       },
     };
 
-    const url = `/api/order/new`;
-    const formData = new FormData();
-    formData.append("checkoutData", JSON.stringify(data));
-    const response = await postData(url, formData);
-
-    response && response.success
-      ? (dispatch(resetCart()),
-        toast.success("Order successfully placed"),
-        router.push(`/checkout/success/${response.createdOrder._id}`))
-      : toast.error(response.message || "Something Went Wrong (500)");
-  }
-
-  const submitOrder = async () => {
     try {
-      if (cartData.items.length === 0) {
-        return toast.warning("Your Cart Is Empty");
-      }
+      setLoading(true);
 
-      if (!preInfo.billingInfo?.fullName && !preInfo.shippingInfo?.fullName) {
-        return toast.warning("Please Update The Billing Information");
-      }
+      const formData = new FormData();
 
-      if (paymentMethod === "cod") {
-        await processOrder("Cash On Delivery");
-      } else if (paymentMethod === "wallet") {
-        await processOrder("Wallet");
+      formData.append(
+        "checkoutData",
+        JSON.stringify(orderData)
+      );
+
+      const response = await postData(
+        "/api/order/new",
+        formData
+      );
+
+      if (response?.success && response.createdOrder?._id) {
+        const orderReference =
+          response.createdOrder.orderId;
+
+        dispatch(resetCart());
+
+        toast.success("Your order request has been submitted!");
+
+        router.push(
+          `/checkout/success/${response.createdOrder._id}`
+        );
       } else {
-        router.push(`/checkout/${paymentMethod}`);
+        toast.error(
+          response?.message ||
+            "Unable to submit your order. Please try again."
+        );
       }
-    } catch (err) {
-      toast.error(`Something Went Wrong ${err}`);
-      console.log(err);
+    } catch (error) {
+      console.error("Order submission error:", error);
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <>
-      <HeadData title="Checkout" />
+      <HeadData title="Guest Checkout" />
+
       <div className={classes.top}>
         <div className={classes.card}>
           <div className="custom_container">
             <div className="row">
               <div className="col-lg-7">
-                <CheckoutNav
-                  tab={visibleTab}
-                  setTab={setVisibleTab}
-                  changeTab={changeTab}
-                />
+                <div className={classes.box}>
+                  <h4 className="mb-3">
+                    Guest Checkout
+                  </h4>
 
-                <form
-                  className={classes.checkout_form}
-                  onSubmit={handleInfoSubmit}
-                  ref={infoForm}
-                  style={{ display: visibleTab === 1 ? "block" : "none" }}
-                >
-                  <div className={classes.box}>
-                    {billingInfoJsx()}
-                    {!sameShippingAddressValue && shippingInfoJsx()}
-                    <button type="submit">{t("continue")}</button>
-                  </div>
-                </form>
+                  <p>
+                    Enter your contact and delivery details.
+                    No account is required.
+                  </p>
 
-                <div
-                  className={classes.checkout_form}
-                  style={{ display: visibleTab === 2 ? "block" : "none" }}
-                >
-                  <div className={classes.box}>
-                    <PaymentGatewayList
-                      selectPaymentMethod={selectPaymentMethod}
-                      submitOrder={submitOrder}
-                      settings={settings.settingsData.paymentGateway}
-                    />
-                  </div>
+                  <form onSubmit={submitOrder}>
+                    <h5 className="mt-4 mb-3">
+                      Customer Information
+                    </h5>
+
+                    <div className="mb-3">
+                      <label className="form-label">
+                        Full Name *
+                      </label>
+                      <input
+                        className="form-control"
+                        type="text"
+                        name="fullName"
+                        value={customer.fullName}
+                        onChange={handleChange}
+                        placeholder="Enter your full name"
+                        required
+                      />
+                    </div>
+
+                    <div className="mb-3">
+                      <label className="form-label">
+                        Email Address *
+                      </label>
+                      <input
+                        className="form-control"
+                        type="email"
+                        name="email"
+                        value={customer.email}
+                        onChange={handleChange}
+                        placeholder="Enter your email"
+                        required
+                      />
+                    </div>
+
+                    <div className="mb-3">
+                      <label className="form-label">
+                        Phone Number *
+                      </label>
+                      <input
+                        className="form-control"
+                        type="tel"
+                        name="phone"
+                        value={customer.phone}
+                        onChange={handleChange}
+                        placeholder="Enter your phone number"
+                        required
+                      />
+                    </div>
+
+                    <h5 className="mt-4 mb-3">
+                      Delivery Address
+                    </h5>
+
+                    <div className="mb-3">
+                      <label className="form-label">
+                        Street Address *
+                      </label>
+                      <input
+                        className="form-control"
+                        type="text"
+                        name="house"
+                        value={customer.house}
+                        onChange={handleChange}
+                        placeholder="House number and street"
+                        required
+                      />
+                    </div>
+
+                    <div className="mb-3">
+                      <label className="form-label">
+                        Suburb / City *
+                      </label>
+                      <input
+                        className="form-control"
+                        type="text"
+                        name="city"
+                        value={customer.city}
+                        onChange={handleChange}
+                        placeholder="Suburb or city"
+                        required
+                      />
+                    </div>
+
+                    <div className="row">
+                      <div className="col-md-6 mb-3">
+                        <label className="form-label">
+                          State *
+                        </label>
+                        <input
+                          className="form-control"
+                          type="text"
+                          name="state"
+                          value={customer.state}
+                          onChange={handleChange}
+                          placeholder="State"
+                          required
+                        />
+                      </div>
+
+                      <div className="col-md-6 mb-3">
+                        <label className="form-label">
+                          Postcode *
+                        </label>
+                        <input
+                          className="form-control"
+                          type="text"
+                          name="zipCode"
+                          value={customer.zipCode}
+                          onChange={handleChange}
+                          placeholder="Postcode"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mb-3">
+                      <label className="form-label">
+                        Country *
+                      </label>
+                      <input
+                        className="form-control"
+                        type="text"
+                        name="country"
+                        value={customer.country}
+                        onChange={handleChange}
+                        required
+                      />
+                    </div>
+
+                    <div className="mt-4">
+                      <div className="alert alert-info">
+                        This is an order request, not an
+                        online payment. Our team will contact
+                        you to confirm your order and complete
+                        the purchase.
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={loading}
+                      >
+                        {loading
+                          ? "Submitting..."
+                          : "Submit Order Request"}
+                      </button>
+                    </div>
+                  </form>
                 </div>
               </div>
 
               <div className="col-lg-5">
-                <div className={classes.box}>{reviewJsx()}</div>
+                <div className={classes.box}>
+                  <h5 className="mt-3">
+                    {t("items_in_your_cart")}
+                  </h5>
+
+                  <div className={classes.cart_item_list}>
+                    <table className="table">
+                      <thead
+                        className={classes.cart_item_header}
+                      >
+                        <tr>
+                          <th>Product</th>
+                          <th className="text-end">
+                            Total
+                          </th>
+                        </tr>
+                      </thead>
+
+                      <tbody>
+                        {(cartData.items || []).map(
+                          (item, index) => (
+                            <tr
+                              className={classes.cart_item}
+                              key={item.uid || item._id || index}
+                            >
+                              <td>
+                                <div
+                                  className={classes.cart_container}
+                                >
+                                  <span
+                                    className={classes.cart_image}
+                                  >
+                                    <ImageLoader
+                                      src={item.image?.[0]?.url}
+                                      height={50}
+                                      width={50}
+                                      alt={item.name}
+                                    />
+                                  </span>
+
+                                  <span
+                                    className={classes.cart_disc}
+                                  >
+                                    <b>{item.name}</b>
+
+                                    {item.color?.name && (
+                                      <span>
+                                        Color: {item.color.name}
+                                      </span>
+                                    )}
+
+                                    {item.attribute?.name && (
+                                      <span>
+                                        {item.attribute.for}:{" "}
+                                        {item.attribute.name}
+                                      </span>
+                                    )}
+
+                                    <span>
+                                      Qty: {item.qty}
+                                    </span>
+                                  </span>
+                                </div>
+                              </td>
+
+                              <td className="text-end">
+                                {currencySymbol}
+                                {decimalBalance(
+                                  item.qty * item.price
+                                )}
+                              </td>
+                            </tr>
+                          )
+                        )}
+                      </tbody>
+                    </table>
+
+                    <table className={classes.priceTable}>
+                      <tbody>
+                        <tr>
+                          <td>Subtotal:</td>
+                          <td className="text-end">
+                            {currencySymbol}
+                            {getTotalPrice}
+                          </td>
+                        </tr>
+
+                        <tr>
+                          <td>Tax:</td>
+                          <td className="text-end">
+                            {currencySymbol}
+                            {getTotalTax}
+                          </td>
+                        </tr>
+
+                        <tr>
+                          <td>VAT:</td>
+                          <td className="text-end">
+                            {currencySymbol}
+                            {getTotalVat}
+                          </td>
+                        </tr>
+
+                        <tr>
+                          <td>Discount:</td>
+                          <td className="text-end">
+                            {currencySymbol}
+                            {decimalBalance(discountPrice)}
+                          </td>
+                        </tr>
+
+                        <tr>
+                          <td>Delivery:</td>
+                          <td className="text-end">
+                            {currencySymbol}0
+                          </td>
+                        </tr>
+
+                        <tr>
+                          <td>
+                            <strong>Total:</strong>
+                          </td>
+                          <td className="text-end">
+                            <strong>
+                              {currencySymbol}
+                              {finalPrice}
+                            </strong>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="input-group mt-3">
+                    <input
+                      type="text"
+                      value={couponCode}
+                      onChange={(e) =>
+                        setCouponCode(e.target.value)
+                      }
+                      className="form-control"
+                      placeholder="Enter promo code"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={checkCoupon}
+                    >
+                      Apply Discount
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-
-      <GlobalModal
-        isOpen={newCustomer}
-        handleCloseModal={() => {
-          setNewCustomer(false);
-          setChangeTab(false);  // 🔥 FIX: collapse address section
-          fetchAddress();
-        }}
-      >
-        <NewAddress hasMainAddress={hasMainAddress} />
-      </GlobalModal>
-
-      {showLoginModal && (
-        <div className={classes.overlay}>
-          <SignIn
-            popup
-            hidePopup={() => {
-              setShowLoginModal(false);
-              router.reload();
-            }}
-          />
-        </div>
-      )}
     </>
   );
-
-  function reviewJsx() {
-    const validateCoupon = (data) => {
-      const coupon = {
-        code: data.code,
-        discount: data.discount,
-      };
-      dispatch(applyCoupon(coupon));
-    };
-
-    const checkCoupon = async () => {
-      try {
-        const data = await postData("/api/order/coupon", {
-          code: couponCode.current.value.trim(),
-        });
-
-        data && data.success
-          ? (toast.success(data.message), validateCoupon(data))
-          : toast.error(data.message);
-      } catch (err) {
-        toast.error("Something Went Wrong!");
-      }
-    };
-
-    return (
-      <div>
-        <h5 className="mt-3">{t("items_in_your_cart")} :</h5>
-
-        <div className={classes.cart_item_list}>
-          <table className="table">
-            <thead className={classes.cart_item_header}>
-              <tr>
-                <th>Product</th>
-                <th className="text-end">Total</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {cartData.items.map((item, index) => (
-                <tr className={classes.cart_item} key={index}>
-                  <td>
-                    <div className={classes.cart_container}>
-                      <span className={classes.cart_image}>
-                        <ImageLoader
-                          src={item.image[0]?.url}
-                          height={50}
-                          width={50}
-                          alt={item.name}
-                        />
-                      </span>
-
-                      <span className={classes.cart_disc}>
-                        <b>{item.name}</b>
-                        {item.color.name && (
-                          <span>Color: {item.color.name}</span>
-                        )}
-                        {item.attribute.name && (
-                          <span>
-                            {`${item.attribute.for}: ${item.attribute.name}`}
-                          </span>
-                        )}
-                        <span>Qty: {item.qty}</span>
-                      </span>
-                    </div>
-                  </td>
-
-                  <td>{currencySymbol}{decimalBalance(item.price)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          <table className={classes.priceTable}>
-            <tbody>
-              <tr>
-                <td colSpan="2"></td>
-                <td className="text-end">{t("sub_total")}:</td>
-                <td className="text-end">
-                  {currencySymbol}
-                  {decimalBalance(getTotalPrice)}
-                </td>
-              </tr>
-
-              <tr>
-                <td colSpan="2"></td>
-                <td className="text-end">{t("tax")}:</td>
-                <td className="text-end">
-                  {currencySymbol}
-                  {decimalBalance(getTotalTax)}
-                </td>
-              </tr>
-
-              <tr>
-                <td colSpan="2"></td>
-                <td className="text-end">{t("vat")}:</td>
-                <td className="text-end">
-                  {currencySymbol}
-                  {decimalBalance(getTotalVat)}
-                </td>
-              </tr>
-
-              <tr>
-                <td colSpan="2"></td>
-                <td className="text-end">{t("discount")}:</td>
-                <td className="text-end">
-                  {currencySymbol}
-                  {decimalBalance(discountPrice)}
-                </td>
-              </tr>
-
-              <tr>
-                <td colSpan="2"></td>
-                <td className="text-end">{t("delivery_charge")}:</td>
-                <td className="text-end">{currencySymbol}{decimalBalance(0)}</td>
-              </tr>
-
-              <tr>
-                <td colSpan="2"></td>
-                <td className="text-end fw-bold">{t("total")}:</td>
-                <td className="text-end fw-bold">
-                  {currencySymbol}
-                  {decimalBalance(finalPrice)}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div className="input-group mt-3">
-          <input
-            type="text"
-            ref={couponCode}
-            defaultValue={cartData.coupon.code}
-            className="form-control p-auto"
-            placeholder={t("please_enter_promo_code")}
-          />
-
-          <div className="input-group-append">
-            <button onClick={checkCoupon}>{t("apply_discount")}</button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  function shippingInfoJsx() {
-    return (
-      <div>
-        <div className="mb-3">
-          <h5>{t("shipping_info")}</h5>
-
-          <div className={classes.payment_list}>
-            {_address.map((x, i) => (
-              <label className={classes.payment_card_label} key={i}>
-                <input
-                  type="radio"
-                  name="shipping_address"
-                  value={x._id}
-                  defaultChecked={x._id === shippingId}
-                  onChange={() => selectInfo(x._id, "shipping_address")}
-                />
-
-                <div className={`${classes.payment_card} ${classes.address_card}`}>
-                  <span>{x.name}</span>
-                  <span>{x.phone}</span>
-                  <span>{`${x.house} ${x.state} ${x.zipCode} ${x.country}`}</span>
-
-                  {x.addressType === "main address" && (
-                    <div className="badge bg-primary">default</div>
-                  )}
-                </div>
-              </label>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  function billingInfoJsx() {
-    return (
-      <div>
-        {session && (
-          <button
-            className={classes.updateButton}
-            onClick={() => setNewCustomer(true)}
-            type="button"
-          >
-            {t("add_address")}
-          </button>
-        )}
-
-        <div className="mb-3">
-          <h5 className={classes.top_space}>{t("billing_info")}</h5>
-
-          <div className={classes.payment_list}>
-            {_address.map((x, i) => (
-              <label className={classes.payment_card_label} key={i}>
-                <input
-                  type="radio"
-                  name="billing_address"
-                  value={x._id}
-                  defaultChecked={x._id === addressId}
-                  onChange={() => selectInfo(x._id, "billing_address")}
-                />
-
-                <div className={`${classes.payment_card} ${classes.address_card}`}>
-                  <span>{x.name}</span>
-                  <span>{x.phone}</span>
-                  <span>{`${x.house} ${x.state} ${x.zipCode} ${x.country}`}</span>
-
-                  {x.addressType === "main address" && (
-                    <div className="badge bg-primary">default</div>
-                  )}
-                </div>
-              </label>
-            ))}
-          </div>
-
-          <div className="py-2 mt-4 form-check">
-            <input
-              type="checkbox"
-              className="form-check-input"
-              id="Check1"
-              onClick={sameShippingAddress}
-            />
-
-            <label className="form-check-label" htmlFor="Check1">
-              {t("shipping_address_same_as_billing_address")}
-            </label>
-          </div>
-        </div>
-      </div>
-    );
-  }
 };
 
 export default Checkout;
