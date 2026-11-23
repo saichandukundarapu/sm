@@ -1,3 +1,4 @@
+
 import { CardText, ChatLeftDots, StarHalf } from "@styled-icons/bootstrap";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
@@ -45,12 +46,15 @@ function ProductDetailsPage({ data, error }) {
   const cartData = useSelector((state) => state.cart);
   const settings = useSelector((state) => state.settings);
   const router = useRouter();
+
   const relatedItem =
     data.related &&
     data.related.filter((obj) => {
       return obj._id !== data.product._id;
     });
+
   const { t } = useTranslation();
+
   useEffect(() => {
     if (data && data.product) {
       setPrice(data.product.discount);
@@ -153,12 +157,19 @@ function ProductDetailsPage({ data, error }) {
     dispatch
   );
 
+  // Add product to cart and redirect only after successful addition
   const addItemToCart = () => {
     const qty = Number(quantityAmount.current.value);
+    let added = false;
+
     if (data.product.type === "simple") {
-      simpleProductCart(qty);
+      added = simpleProductCart(qty);
     } else {
-      variableProductCart(qty);
+      added = variableProductCart(qty);
+    }
+
+    if (added) {
+      router.push("/cart");
     }
   };
 
@@ -256,6 +267,7 @@ function ProductDetailsPage({ data, error }) {
                     </div>
                   </div>
                 </div>
+
                 <div className="col-lg-6 p-0">
                   <div className={classes.details}>
                     <p className={classes.unit}>
@@ -278,6 +290,7 @@ function ProductDetailsPage({ data, error }) {
                     <p className={classes.description}>
                       {data.product.shortDescription}
                     </p>
+
                     {data.product.type === "variable" && (
                       <div>
                         {data.product.colors.length > 0 && (
@@ -307,6 +320,7 @@ function ProductDetailsPage({ data, error }) {
                             </div>
                           </div>
                         )}
+
                         {data.product.attributes.length > 0 && (
                           <div>
                             <p className={classes.section_heading}>
@@ -330,6 +344,7 @@ function ProductDetailsPage({ data, error }) {
                         )}
                       </div>
                     )}
+
                     <div className={classes.category}>
                       <p className={classes.section_heading}>
                         {t("categories")}
@@ -340,6 +355,7 @@ function ProductDetailsPage({ data, error }) {
                         </span>
                       ))}
                     </div>
+
                     <div className={classes.cart_section}>
                       <p className={classes.section_heading}>QTY</p>
                       <div className={classes.number_input}>
@@ -384,6 +400,7 @@ function ProductDetailsPage({ data, error }) {
                 </div>
               </div>
             </div>
+
             <div className={classes.tab_button}>
               <button
                 onClick={() => _showTab(1)}
@@ -404,6 +421,7 @@ function ProductDetailsPage({ data, error }) {
                 {t("questions")} ({data.product.question.length})
               </button>
             </div>
+
             <div className={classes.details_card}>
               {tabId === 1 && (
                 <>
@@ -422,6 +440,7 @@ function ProductDetailsPage({ data, error }) {
                   )}
                 </>
               )}
+
               {tabId === 2 && (
                 <>
                   {data.product.review && data.product.review.length > 0 ? (
@@ -434,6 +453,7 @@ function ProductDetailsPage({ data, error }) {
                   )}
                 </>
               )}
+
               {tabId === 3 && (
                 <>
                   {session && (
@@ -456,6 +476,7 @@ function ProductDetailsPage({ data, error }) {
                       </button>
                     </form>
                   )}
+
                   {data.product.question && data.product.question.length > 0 ? (
                     <Question
                       qtn={data.product.question}
@@ -472,6 +493,7 @@ function ProductDetailsPage({ data, error }) {
                 </>
               )}
             </div>
+
             {relatedItem.length > 0 && (
               <div className={classes.related}>
                 <p className={classes.related_header}>{t("Related Items")}</p>
