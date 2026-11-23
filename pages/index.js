@@ -36,6 +36,11 @@ const GlobalModal = dynamic(() =>
   import("~/components/Ui/Modal/modal")
 );
 
+// Quit Smoking Section
+const QuitSmokingSection = dynamic(() =>
+  import("~/components/QuitSmokingSection")
+);
+
 function HomePage({ data, error }) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
@@ -108,6 +113,9 @@ function HomePage({ data, error }) {
             title={t("best_selling")}
             type="bestselling"
           />
+
+          {/* Quit Smoking Section - Added */}
+          <QuitSmokingSection />
 
           {/* Existing Brands */}
           <BrandCardList items={data.brand || []} />
