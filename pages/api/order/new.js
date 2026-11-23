@@ -8,6 +8,8 @@ import productModel from "~/models/product";
 import userModel from "~/models/user";
 import dbConnect from "~/utils/dbConnect";
 import { parseForm } from "~/utils/parseForm";
+import { sendOrderEmails } from "~/lib/emailService";
+import { generateInvoice } from "~/lib/generateInvoice";
 
 export const config = {
   api: {
@@ -145,6 +147,22 @@ export default async function apiHandler(req, res) {
         };
 
         const createdOrder = await orderModel.create(orderData);
+
+        // Generate PDF invoice and send emails to admin and customer.
+        try {
+          const invoiceBuffer = await generateInvoice(createdOrder);
+
+          await sendOrderEmails({
+            order: createdOrder,
+            customerEmail: billingInfo.email,
+            invoiceBuffer,
+          });
+
+          console.log("Order emails sent successfully");
+        } catch (emailError) {
+          // Email failure should not cancel an already-created order.
+          console.error("Order email failed:", emailError);
+        }
 
         if (session && session.user.id) {
           await userModel.findByIdAndUpdate(session.user.id, {
