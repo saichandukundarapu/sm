@@ -75,7 +75,7 @@
       "google": false
     },
     "security": {
-      "loginForPurchase": true
+      "loginForPurchase": false
     }
   },
   "country": [
