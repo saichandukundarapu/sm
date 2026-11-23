@@ -7,6 +7,7 @@ import HeadData from "~/components/Head";
 import { setSettingsData } from "~/lib/clientFunctions";
 import homePageData from "~/lib/dataLoader/home";
 import { wrapper } from "~/redux/store";
+import Link from "next/link";
 
 const Error500 = dynamic(() => import("~/components/error/500"));
 const Header = dynamic(() => import("~/components/Header/header"));
@@ -36,7 +37,6 @@ const GlobalModal = dynamic(() =>
   import("~/components/Ui/Modal/modal")
 );
 
-// Quit Smoking Section
 const QuitSmokingSection = dynamic(() =>
   import("~/components/QuitSmokingSection")
 );
@@ -114,8 +114,66 @@ function HomePage({ data, error }) {
             type="bestselling"
           />
 
-          {/* Quit Smoking Section - Added */}
+          {/* Quit Smoking Section */}
           <QuitSmokingSection />
+
+          {/* Quit Smoking Page Link Banner */}
+          <div
+            style={{
+              margin: "35px auto",
+              maxWidth: "1200px",
+              padding: "35px 25px",
+              borderRadius: "16px",
+              background:
+                "linear-gradient(110deg, #e7f7ef, #eef6ff)",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: "20px",
+            }}
+          >
+            <div style={{ maxWidth: "700px" }}>
+              <h2
+                style={{
+                  color: "#193d38",
+                  fontSize: "26px",
+                  fontWeight: "800",
+                  margin: "0 0 10px",
+                }}
+              >
+                Ready to Explore Smoking Cessation Support?
+              </h2>
+
+              <p
+                style={{
+                  color: "#667b77",
+                  fontSize: "15px",
+                  lineHeight: "1.7",
+                  margin: 0,
+                }}
+              >
+                Explore helpful information, nicotine replacement
+                therapy resources and professional guidance.
+              </p>
+            </div>
+
+            <Link
+              href="/quit-smoking"
+              style={{
+                display: "inline-block",
+                padding: "14px 25px",
+                background: "#15976c",
+                color: "#ffffff",
+                borderRadius: "7px",
+                textDecoration: "none",
+                fontWeight: "700",
+                whiteSpace: "nowrap",
+              }}
+            >
+              Explore Quit Smoking →
+            </Link>
+          </div>
 
           {/* Existing Brands */}
           <BrandCardList items={data.brand || []} />
@@ -160,8 +218,8 @@ export const getServerSideProps = wrapper.getServerSideProps(
       return {
         props: {
           data,
-          error: !data.success
-        }
+          error: !data.success,
+        },
       };
     }
 );
