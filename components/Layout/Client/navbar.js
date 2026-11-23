@@ -1,3 +1,4 @@
+
 import {
   BoxArrowInRight,
   GeoAlt,
@@ -25,15 +26,20 @@ const LanguageSwitcher = dynamic(() => import("~/components/LanguageSwitcher"));
 
 const NavBar = () => {
   const [hideTopBar, setHideTopBar] = useState(false);
+
   // Selecting session from global state
   const { session } = useSelector((state) => state.localSession);
+
   // Selecting settings from global state
   const { settingsData } = useSelector((state) => state.settings);
+
   const { wishlist, compare } = useSelector((state) => state.cart);
   const [std, setStd] = useState(settingsData);
   const { t } = useTranslation();
+
   useEffect(() => {
     window.addEventListener("scroll", handleScroll);
+
     return () => {
       window.removeEventListener("scroll", handleScroll);
     };
@@ -47,6 +53,7 @@ const NavBar = () => {
 
   const handleScroll = () => {
     const position = window.pageYOffset;
+
     if (position > 110) {
       setHideTopBar(true);
     } else {
@@ -62,6 +69,7 @@ const NavBar = () => {
     }
   };
 
+  // Navigation items
   const navItem = [
     {
       id: 1,
@@ -88,12 +96,19 @@ const NavBar = () => {
       name: t("about"),
       to: "/about",
     },
+    {
+      id: 6,
+      name: "Quit Smoking",
+      to: "/quit-smoking",
+    },
   ];
 
   return (
     <>
       <nav
-        className={`${c.nav} ${hideTopBar ? c.hide_top_bar : c.show_top_bar}`}
+        className={`${c.nav} ${
+          hideTopBar ? c.hide_top_bar : c.show_top_bar
+        }`}
       >
         <div className={c.top_bar}>
           <div>
@@ -104,6 +119,7 @@ const NavBar = () => {
                 <GeoAlt width={15} height={15} />
                 {std.shortAddress}
               </div>
+
               <div
                 className={`${c.top_bar_content} ${c.top_bar_content_p_left}`}
               >
@@ -111,8 +127,10 @@ const NavBar = () => {
                 {std.phoneHeader}
               </div>
             </div>
+
             <div className={c.top_bar_right}>
               <LanguageSwitcher />
+
               {!session && (
                 <Link href="/signup">
                   <div
@@ -123,26 +141,31 @@ const NavBar = () => {
                   </div>
                 </Link>
               )}
+
               <div
                 className={`${c.top_bar_content} ${c.top_bar_content_p_right}`}
               >
                 <Person width={16} height={16} />
+
                 {!session && (
                   <Link href="/signin">
                     <span>{t("signin")}</span>
                   </Link>
                 )}
+
                 {session && (
                   <Link href="/profile">
                     <span>{session.user.name}</span>
                   </Link>
                 )}
               </div>
+
               {session && (
                 <div
                   className={`${c.top_bar_content} ${c.top_bar_content_p_right}`}
                 >
                   <BoxArrowInRight width={16} height={16} />
+
                   <span onClick={() => signOut({ callbackUrl: "/" })}>
                     {t("signout")}
                   </span>
@@ -151,7 +174,9 @@ const NavBar = () => {
             </div>
           </div>
         </div>
+
         <hr />
+
         <div className={c.container}>
           <div className={c.start}>
             <div className={c.brand}>
@@ -167,9 +192,11 @@ const NavBar = () => {
               </Link>
             </div>
           </div>
+
           <div className={c.center}>
             <SearchBar />
           </div>
+
           <div className={c.end}>
             <Link href={"/compare"} passHref legacyBehavior>
               <div>
@@ -178,26 +205,32 @@ const NavBar = () => {
                 <p>{t("compare")}</p>
               </div>
             </Link>
+
             <div onClick={goToWishList}>
               <Heart width={24} height={24} />
               <span>{wishlist || 0}</span>
               <p>{t("wishlist")}</p>
             </div>
+
             <CartView />
           </div>
         </div>
+
         <hr />
+
         <div className={c.bottom_bar}>
           <CategoryMenu />
+
           <div className={c.nav_link}>
             <ul className={c.ul}>
-              {navItem.map((item, index) => (
-                <li className={c.list} key={index}>
+              {navItem.map((item) => (
+                <li className={c.list} key={item.id}>
                   <div className={c.item}>
                     <Link href={item.to}>{item.name}</Link>
                   </div>
                 </li>
               ))}
+
               {session && (session.user.a || session.user.s.status) && (
                 <li className={c.list}>
                   <div className={c.item}>
@@ -207,6 +240,7 @@ const NavBar = () => {
               )}
             </ul>
           </div>
+
           <div className={c.track}>
             <Link href="/order-track">
               <GeoAlt width={18} height={18} />
