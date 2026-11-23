@@ -1,3 +1,4 @@
+
 import customId from "custom-id-new";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
@@ -14,12 +15,14 @@ import Spinner from "../../Ui/Spinner";
 import classes from "./productDetails.module.css";
 import { useTranslation } from "react-i18next";
 import { _simpleProductCart, _variableProductCart } from "~/lib/cartHandle";
+import { useRouter } from "next/router";
 
 const Carousel = dynamic(() =>
   import("react-responsive-carousel").then((com) => com.Carousel)
 );
 
 const ProductDetails = (props) => {
+  const router = useRouter();
   const url = `/api/product/${props.productSlug}`;
   const { data, error } = useSWR(url, fetchData);
   const [selectedColor, setSelectedColor] = useState({
@@ -38,6 +41,7 @@ const ProductDetails = (props) => {
   const cartData = useSelector((state) => state.cart);
   const settings = useSelector((state) => state.settings);
   const { t } = useTranslation();
+
   useEffect(() => {
     if (data && data.product) {
       setPrice(data.product.discount);
@@ -161,12 +165,19 @@ const ProductDetails = (props) => {
     dispatch
   );
 
+  // Add product to cart and redirect only when successful
   const addItemToCart = () => {
     const qty = Number(quantityAmount.current.value);
+    let added = false;
+
     if (data.product.type === "simple") {
-      simpleProductCart(qty);
+      added = simpleProductCart(qty);
     } else {
-      variableProductCart(qty);
+      added = variableProductCart(qty);
+    }
+
+    if (added) {
+      router.push("/cart");
     }
   };
 
@@ -213,13 +224,16 @@ const ProductDetails = (props) => {
             </div>
           </div>
         </div>
+
         <div className="col-lg-6 p-0">
           <div className={classes.details}>
             <p className={classes.unit}>
               {data.product.unitValue} {data.product.unit}
             </p>
+
             <h1 className={classes.heading}>{data.product.name}</h1>
             <hr />
+
             <div>
               {data.product.discount < data.product.price && (
                 <p className={classes.price_ori}>
@@ -227,14 +241,17 @@ const ProductDetails = (props) => {
                   {data.product.price}
                 </p>
               )}
+
               <p className={classes.price}>
                 {settings.settingsData.currency.symbol}
                 {price}
               </p>
             </div>
+
             <p className={classes.description}>
               {data.product.shortDescription}
             </p>
+
             {data.product.type === "variable" && (
               <div>
                 {data.product.colors.length > 0 && (
@@ -245,6 +262,7 @@ const ProductDetails = (props) => {
                     >
                       {t("color")}
                     </p>
+
                     <div className={classes.color_selector_container}>
                       {data.product.colors.map((color, i) => (
                         <div
@@ -262,11 +280,13 @@ const ProductDetails = (props) => {
                     </div>
                   </div>
                 )}
+
                 {data.product.attributes.length > 0 && (
                   <div>
                     <p className={classes.section_heading}>
                       {data.product.attributes[0]?.for}
                     </p>
+
                     <div className={classes.select}>
                       {data.product.attributes.map((attr, i) => (
                         <span
@@ -283,6 +303,7 @@ const ProductDetails = (props) => {
                 )}
               </div>
             )}
+
             <div className={classes.category}>
               <p className={classes.section_heading}>{t("categories")}</p>
               {data.product.categories.map((category, index) => (
@@ -291,13 +312,16 @@ const ProductDetails = (props) => {
                 </span>
               ))}
             </div>
+
             <div className={classes.cart_section}>
               <p className={classes.section_heading}>QTY</p>
+
               <div className={classes.number_input}>
                 <button
                   onClick={stepDownQty}
                   className={classes.minus}
                 ></button>
+
                 <input
                   className={classes.quantity}
                   ref={quantityAmount}
@@ -311,8 +335,13 @@ const ProductDetails = (props) => {
                   type="number"
                   disabled
                 />
-                <button onClick={stepUpQty} className={classes.plus}></button>
+
+                <button
+                  onClick={stepUpQty}
+                  className={classes.plus}
+                ></button>
               </div>
+
               <div className={classes.button_container}>
                 {stockInfo(data.product) ? (
                   <button
