@@ -3,150 +3,230 @@ import Head from "next/head";
 import Link from "next/link";
 
 export default function QuitSmokingPage() {
-  const sections = [
-    {
-      icon: "✚",
-      title: "Nicotine Replacement Therapy",
-      description:
-        "Learn about nicotine replacement options, including patches, gum and lozenges, and how they may support your quit journey.",
-    },
-    {
-      icon: "🌿",
-      title: "Smoking Cessation Support",
-      description:
-        "Discover helpful information, practical tips and resources to help you take steps towards a smoke-free lifestyle.",
-    },
-    {
-      icon: "♡",
-      title: "Professional Guidance",
-      description:
-        "Speak with a qualified healthcare professional about suitable smoking cessation options and support.",
-    },
-  ];
-
   return (
     <>
       <Head>
-        <title>Quit Smoking | Brisbane Surgical Supplies</title>
+        <title>Quit Smoking Support | Brisbane Surgical Supplies</title>
         <meta
           name="description"
-          content="Explore smoking cessation information, nicotine replacement therapy and professional guidance."
+          content="Explore smoking cessation information and support resources to help you take your next step towards a smoke-free life."
         />
       </Head>
 
-      <main style={{
-        background: "linear-gradient(135deg,#f0faf6,#f5faff)",
-        padding: "65px 20px",
-        minHeight: "70vh"
-      }}>
-        <div style={{
-          maxWidth: "1150px",
-          margin: "auto"
-        }}>
-          <div style={{
-            textAlign: "center",
-            maxWidth: "750px",
-            margin: "0 auto 45px"
-          }}>
-            <span style={{
-              color: "#15976c",
-              fontWeight: "700",
-              letterSpacing: "2px",
-              fontSize: "12px"
-            }}>
-              HEALTHIER CHOICES
-            </span>
+      <main
+        style={{
+          background: "#f5faf8",
+          padding: "65px 20px",
+        }}
+      >
+        <div
+          style={{
+            maxWidth: "1150px",
+            margin: "0 auto",
+          }}
+        >
+          {/* Breadcrumb */}
+          <div style={{ marginBottom: "25px", fontSize: "14px" }}>
+            <Link href="/" style={{ color: "#15976c" }}>
+              Home
+            </Link>
+            <span style={{ color: "#888" }}> / Quit Smoking</span>
+          </div>
 
-            <h1 style={{
-              color: "#193d38",
-              fontSize: "42px",
-              fontWeight: "800",
-              margin: "15px 0"
-            }}>
-              Quit Smoking
+          {/* Main heading */}
+          <section
+            style={{
+              padding: "55px 35px",
+              borderRadius: "18px",
+              background:
+                "linear-gradient(120deg,#e4f6ed,#edf5ff)",
+              textAlign: "center",
+            }}
+          >
+            <div style={{ fontSize: "42px" }}>🌿</div>
+
+            <h1
+              style={{
+                color: "#193d38",
+                fontSize: "38px",
+                fontWeight: "800",
+                margin: "15px 0",
+              }}
+            >
+              Get Started with Quit Smoking Support
             </h1>
 
-            <p style={{
-              color: "#667b77",
-              fontSize: "16px",
-              lineHeight: "1.8"
-            }}>
-              Your journey to becoming smoke-free starts with
-              finding the right support. Explore information
-              and resources to help you take the next step.
+            <p
+              style={{
+                maxWidth: "720px",
+                margin: "0 auto",
+                color: "#667b77",
+                fontSize: "16px",
+                lineHeight: "1.9",
+              }}
+            >
+              Finding the right support can help you take
+              your next step towards a smoke-free life.
+              Explore trusted information and support
+              resources to help you along the way.
             </p>
-          </div>
+          </section>
 
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))",
-            gap: "25px"
-          }}>
-            {sections.map((item, index) => (
-              <div key={index} style={{
-                background: "#fff",
-                padding: "30px",
-                borderRadius: "16px",
-                border: "1px solid #e4eee9",
-                boxShadow: "0 8px 25px rgba(30,70,55,.06)"
-              }}>
-                <div style={{
-                  width: "55px",
-                  height: "55px",
-                  borderRadius: "15px",
-                  background: "#e8f7ef",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "27px",
+          {/* Support section */}
+          <section
+            style={{
+              marginTop: "45px",
+              background: "#ffffff",
+              borderRadius: "16px",
+              padding: "35px",
+              boxShadow: "0 8px 30px rgba(0,0,0,0.04)",
+            }}
+          >
+            <h2
+              style={{
+                color: "#193d38",
+                fontSize: "27px",
+                fontWeight: "800",
+                marginBottom: "15px",
+              }}
+            >
+              Find the Support You Need
+            </h2>
+
+            <p
+              style={{
+                color: "#667b77",
+                fontSize: "15px",
+                lineHeight: "1.9",
+              }}
+            >
+              Quitting smoking can be challenging, but
+              support is available. Speak with your GP
+              or pharmacist about suitable options and
+              access professional counselling to help
+              you build a quit plan.
+            </p>
+          </section>
+
+          {/* Quitline consultation */}
+          <section
+            style={{
+              marginTop: "30px",
+              padding: "40px 30px",
+              background: "#ffffff",
+              borderRadius: "16px",
+              textAlign: "center",
+              border: "1px solid #e2eee8",
+            }}
+          >
+            <div style={{ fontSize: "42px" }}>☎</div>
+
+            <h2
+              style={{
+                color: "#193d38",
+                fontSize: "27px",
+                fontWeight: "800",
+                margin: "15px 0",
+              }}
+            >
+              Speak with Quitline
+            </h2>
+
+            <p
+              style={{
+                color: "#667b77",
+                maxWidth: "650px",
+                margin: "0 auto 25px",
+                fontSize: "15px",
+                lineHeight: "1.8",
+              }}
+            >
+              Quitline provides free and confidential
+              counselling to help people develop a
+              personalised plan to quit smoking or vaping.
+            </p>
+
+            <a
+              href="tel:137848"
+              style={{
+                display: "inline-block",
+                padding: "14px 30px",
+                borderRadius: "7px",
+                background: "#15976c",
+                color: "#ffffff",
+                fontWeight: "700",
+                textDecoration: "none",
+                fontSize: "16px",
+              }}
+            >
+              Call Quitline: 13 7848
+            </a>
+
+            <div style={{ marginTop: "18px" }}>
+              <a
+                href="https://www.quit.org.au/"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
                   color: "#15976c",
-                  marginBottom: "22px"
-                }}>
-                  {item.icon}
-                </div>
+                  fontWeight: "600",
+                  textDecoration: "none",
+                }}
+              >
+                Visit Official Quit Website →
+              </a>
+            </div>
+          </section>
 
-                <h2 style={{
-                  fontSize: "21px",
-                  color: "#193d38",
-                  marginBottom: "15px"
-                }}>
-                  {item.title}
-                </h2>
+          {/* Healthcare advice */}
+          <section
+            style={{
+              marginTop: "30px",
+              padding: "30px",
+              background: "#eaf5f0",
+              borderRadius: "16px",
+            }}
+          >
+            <h3
+              style={{
+                color: "#193d38",
+                fontSize: "21px",
+                marginBottom: "12px",
+              }}
+            >
+              Professional Healthcare Advice
+            </h3>
 
-                <p style={{
-                  color: "#71817d",
-                  fontSize: "14px",
-                  lineHeight: "1.8"
-                }}>
-                  {item.description}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          <div style={{
-            textAlign: "center",
-            marginTop: "45px",
-            color: "#55736a"
-          }}>
-            <p>
-              For personalised advice, consult a qualified
-              healthcare professional.
+            <p
+              style={{
+                color: "#55736a",
+                fontSize: "14px",
+                lineHeight: "1.8",
+                margin: 0,
+              }}
+            >
+              Speak with a qualified healthcare professional
+              about smoking cessation methods, nicotine
+              replacement options and medicines that may
+              be appropriate for your individual needs.
             </p>
+          </section>
 
-            <Link href="/" style={{
-              display: "inline-block",
-              marginTop: "15px",
-              padding: "13px 25px",
-              background: "#15976c",
-              color: "#fff",
-              borderRadius: "7px",
-              textDecoration: "none",
-              fontWeight: "700"
-            }}>
-              Back to Home
-            </Link>
-          </div>
+          {/* Disclaimer */}
+          <p
+            style={{
+              marginTop: "30px",
+              color: "#84928d",
+              fontSize: "12px",
+              lineHeight: "1.7",
+              textAlign: "center",
+            }}
+          >
+            Brisbane Surgical Supplies provides this page
+            for general informational purposes. It does not
+            provide medical diagnosis, prescriptions or
+            individual treatment advice.
+          </p>
         </div>
       </main>
     </>
