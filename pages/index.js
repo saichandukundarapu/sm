@@ -39,7 +39,6 @@ const GlobalModal = dynamic(() =>
 function HomePage({ data, error }) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
-  const [activeSlide, setActiveSlide] = useState(0);
   const { t } = useTranslation();
 
   const handleCloseModal = () => {
@@ -52,49 +51,6 @@ function HomePage({ data, error }) {
       setIsOpen(true);
     }
   }, [router.query.slug]);
-
-  // Custom Brisbane Surgical Supplies slider banners
-  const customSlides = [
-    {
-      image:
-        "https://brisbane-surgical-supplies-assets.s3.eu-north-1.amazonaws.com/7252755osgqfmp6266577skjszrnPremium+Medical+Supplies+Banner.png",
-      alt: "brisbane-surgical-supplies-assets",
-      title: "brisbane-surgical-supplies-assets",
-      url: "/gallery"   
-    },
-    {
-      image:
-        "https://brisbane-surgical-supplies-assets.s3.eu-north-1.amazonaws.com/CPAP+Therapy+for+Better+Sleep.png",
-      alt: "CPAP Therapy for Better Sleep",
-      title: "CPAP Therapy for Better Sleep",
-      url: "/gallery?category=cpap-masks-and-machines"
-    },
-    {
-      image:
-        "https://brisbane-surgical-supplies-assets.s3.eu-north-1.amazonaws.com/CPAP+Masks+and+Machines+Essentials-1.png",
-      alt: "CPAP Masks and Machines Essentials",
-      title: "CPAP Masks and Machines",
-      url: "/gallery?category=cpap-masks-and-machines"
-    },
-    {
-      image:
-        "https://brisbane-surgical-supplies-assets.s3.eu-north-1.amazonaws.com/Quit+Smoking%2C+Breathe+Freely-2.png",
-      alt: "Quit Smoking, Breathe Freely",
-      title: "Quit Smoking, Breathe Freely",
-      url: "/gallery"
-    }
-  ];
-
-  // Automatically change slides every 5 seconds
-  useEffect(() => {
-    const sliderTimer = setInterval(() => {
-      setActiveSlide((current) =>
-        (current + 1) % customSlides.length
-      );
-    }, 5000);
-
-    return () => clearInterval(sliderTimer);
-  }, []);
 
   return (
     <>
@@ -111,78 +67,6 @@ function HomePage({ data, error }) {
               data.additional.homePage.carousel
             }
           />
-
-          {/* Brisbane Surgical Supplies Custom Image Slider */}
-          <section
-            style={{
-              width: "100%",
-              maxWidth: "1920px",
-              margin: "0 auto",
-              padding: "0",
-              backgroundColor: "#ffffff",
-              overflow: "hidden",
-              position: "relative"
-            }}
-          >
-            <a
-              href={customSlides[activeSlide].url}
-              aria-label={customSlides[activeSlide].title}
-              style={{
-                display: "block",
-                width: "100%",
-                lineHeight: 0,
-                textDecoration: "none"
-              }}
-            >
-              <img
-                key={customSlides[activeSlide].image}
-                src={customSlides[activeSlide].image}
-                alt={customSlides[activeSlide].alt}
-                style={{
-                  display: "block",
-                  width: "100%",
-                  height: "auto",
-                  maxWidth: "1920px",
-                  objectFit: "contain",
-                  objectPosition: "center",
-                  margin: "0 auto"
-                }}
-              />
-            </a>
-
-            {/* Slider Indicators - No Arrows */}
-            <div
-              style={{
-                position: "absolute",
-                bottom: "15px",
-                left: "50%",
-                transform: "translateX(-50%)",
-                display: "flex",
-                alignItems: "center",
-                gap: "10px"
-              }}
-            >
-              {customSlides.map((slide, index) => (
-                <button
-                  key={slide.image}
-                  type="button"
-                  onClick={() => setActiveSlide(index)}
-                  aria-label={`Go to banner ${index + 1}`}
-                  style={{
-                    width: activeSlide === index ? "26px" : "10px",
-                    height: "10px",
-                    borderRadius: "20px",
-                    border: "none",
-                    padding: 0,
-                    background:
-                      activeSlide === index ? "#087f83" : "#b8c5cc",
-                    cursor: "pointer",
-                    transition: "all 0.3s ease"
-                  }}
-                />
-              ))}
-            </div>
-          </section>
 
           {/* Existing Categories */}
           <CategoryList categoryList={data.category} />
