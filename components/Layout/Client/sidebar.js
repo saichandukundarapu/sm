@@ -1,3 +1,4 @@
+
 import { XLg } from "@styled-icons/bootstrap";
 import Link from "next/link";
 import { useSelector } from "react-redux";
@@ -36,25 +37,33 @@ const navItem = [
     name: "About",
     to: "/about",
   },
+  {
+    id: 7,
+    name: "Quit Smoking",
+    to: "/quit-smoking",
+  },
 ];
 
 export default function Sidebar({ show, toggle }) {
   const { session } = useSelector((state) => state.localSession);
+
   return (
     <div className={show ? `${c.sidebar} ${c.show}` : `${c.sidebar} ${c.hide}`}>
       <div className={c.header}>
         <h4>Menu</h4>
         <XLg width={25} height={25} onClick={toggle} />
       </div>
+
       <div className={c.sidebar_link}>
         <ul className={c.sidebar_ul}>
-          {navItem.map((item, index) => (
-            <li className={c.sidebar_list} key={index}>
+          {navItem.map((item) => (
+            <li className={c.sidebar_list} key={item.id}>
               <div className={c.sidebar_item}>
                 <Link href={item.to}>{item.name}</Link>
               </div>
             </li>
           ))}
+
           {!session && (
             <>
               <li className={c.sidebar_list}>
@@ -62,6 +71,7 @@ export default function Sidebar({ show, toggle }) {
                   <Link href="/signup">Register</Link>
                 </div>
               </li>
+
               <li className={c.sidebar_list}>
                 <div className={c.sidebar_item}>
                   <Link href="/signin">Sign in</Link>
@@ -69,6 +79,7 @@ export default function Sidebar({ show, toggle }) {
               </li>
             </>
           )}
+
           {session && (
             <>
               <li className={c.sidebar_list}>
@@ -76,6 +87,7 @@ export default function Sidebar({ show, toggle }) {
                   <Link href="/">{session.user.name}</Link>
                 </div>
               </li>
+
               <li className={c.sidebar_list}>
                 <div className={c.sidebar_item}>
                   <span onClick={() => signOut({ callbackUrl: "/" })}>
@@ -85,6 +97,7 @@ export default function Sidebar({ show, toggle }) {
               </li>
             </>
           )}
+
           {session && (session.user.a || session.user.s.status) && (
             <li className={c.sidebar_list}>
               <div className={c.sidebar_item}>
@@ -92,6 +105,7 @@ export default function Sidebar({ show, toggle }) {
               </div>
             </li>
           )}
+
           <li className={c.sidebar_list}>
             <div className={c.sidebar_item}>
               <LanguageSwitcher />
