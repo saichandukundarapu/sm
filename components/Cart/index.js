@@ -94,14 +94,9 @@ const CartPage = () => {
     }
   };
 
-  const checkoutProcess = () => {
-    if (settings.settingsData.security.loginForPurchase && !session) {
-      toast.info("Please Login To Continue");
-      router.push("/signin");
-    } else {
-      router.push("/checkout");
-    }
-  };
+ const checkoutProcess = () => {
+  router.push("/checkout");
+};
 
   if (cart.items.length === 0) {
     return (
