@@ -77,7 +77,7 @@ export const settings = {
     google: { type: Boolean, default: false },
   },
   security: {
-    loginForPurchase: { type: Boolean, default: true },
+    loginForPurchase: { type: Boolean, default: false },
   },
 };
 
